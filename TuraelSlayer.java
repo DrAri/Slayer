@@ -51,7 +51,7 @@ import org.tribot.script.interfaces.MessageListening07;
 import org.tribot.script.interfaces.Painting;
 import org.tribot.script.interfaces.EventBlockingOverride;
 
-@ScriptManifest(authors = { "Yaw hide" }, version = 0.4, category = "Slayer", name = "Yaw hide's Easy Slayer")
+@ScriptManifest(authors = { "Yaw hide" }, version = 0.41, category = "Slayer", name = "Yaw hide's Easy Slayer")
 public class TuraelSlayer extends Script implements MessageListening07, Painting, EventBlockingOverride{
 
 	//food Ids
@@ -1961,7 +1961,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 					return false;
 				}
 			}
-			//games.length == 0 || food.length == 0 || gem.length == 0 || vtab.length > 0){
+			println("step 1");
 			if (currTask.equals( "banshees")){
 				if(ecto.length > 0 && (checkForHelm(1) || earmuffs.length > 0))
 					return true;
@@ -1981,15 +1981,15 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 					return true;
 			}
 			else if (currTask.equals( "cave_bugs")){
-				if(ltab.length > 0 && lightsource.length > 0 && (checkForHelm(0) || spiny.length > 0))
+				if(lightsource.length > 0 && (checkForHelm(0) || spiny.length > 0))
 					return true;
 			}
 			else if (currTask.equals( "cave_crawlers")){
-				if(ctab.length > 0 && anti.length > 0)
+				if(anti.length > 0)
 					return true;
 			}
 			else if (currTask.equals( "cave_slimes")){
-				if(tinder.length > 0 && ltab.length > 0 && lightsource.length > 0 && anti.length > 0 && (checkForHelm(0) || spiny.length > 0))
+				if(tinder.length > 0 && lightsource.length > 0 && anti.length > 0 && (checkForHelm(0) || spiny.length > 0))
 					return true;
 			}
 			else if (currTask.equals( "cows")){
@@ -2152,7 +2152,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 	RSTile renekSlayCave = new RSTile(2797, 3614, 0);
 	RSTile[] toCCinside = { new RSTile(2804, 10001, 0), new RSTile(2798, 9997, 0), new RSTile(2792, 9996, 0),
 			new RSTile(2788, 9996, 0) };
-	RSTile[] toRenekSlayCaveArea = {new RSTile(2633, 3640, 0), new RSTile(2810, 3470, 0)};
+	RSTile[] toRenekSlayCaveArea = {new RSTile(2633, 3650, 0), new RSTile(2810, 3480, 0)};
 	RSTile[] toRenekSlayCave = { new RSTile(2752, 3477, 0), new RSTile(2746, 3479, 0), new RSTile(2740, 3480, 0), 
 			new RSTile(2731, 3484, 0), new RSTile(2724, 3483, 0), new RSTile(2715, 3484, 0), 
 			new RSTile(2706, 3484, 0), new RSTile(2699, 3484, 0), new RSTile(2692, 3484, 0), 
@@ -2171,7 +2171,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 			new RSTile(2754, 3599, 0), new RSTile(2761, 3598, 0), new RSTile(2770, 3595, 0), 
 			new RSTile(2778, 3595, 0), new RSTile(2786, 3597, 0), new RSTile(2789, 3602, 0), 
 			new RSTile(2792, 3609, 0), new RSTile(2795, 3615, 0) };
-	RSTile[] caveCrawlerArea = {new RSTile(2778, 10004, 0), new RSTile(2815, 9985, 0)};
+	RSTile[] caveCrawlerArea = {new RSTile(2775, 10006, 0), new RSTile(2810, 9985, 0)};
 	
 	
 	
