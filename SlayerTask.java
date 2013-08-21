@@ -31,7 +31,7 @@ public class SlayerTask {
 		return specialItems;
 	}
 
-	public static int getAmmountLeft() {
+	public static int getAmountLeft() {
 		RSInterface textInterface = Interfaces.get(243, 2);
 		if (textInterface != null && textInterface.getText().length() > 0)
 			return filterNumbers(textInterface.getText());
