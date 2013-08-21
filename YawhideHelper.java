@@ -1,4 +1,4 @@
-package scripts.AIOSlayer;
+package scripts;
 
 import org.tribot.api2007.Inventory;
 import org.tribot.api2007.types.RSItem;
