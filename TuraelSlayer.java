@@ -180,7 +180,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 				FIGHT();
 		}
 		else{
-			println("I am NOT at my task pre");
+			println("I am NOT at my task");
 			if (!haveReqEquip(0)){
 				if(pos().distanceTo(varrockBankT) <= 8)
 					BANKING();
@@ -237,6 +237,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 					FIGHT();
 			}
 			else{
+				println("I am NOT at my task");
 				if (!haveReqEquip(0)){
 					if(pos().distanceTo(varrockBankT) <= 8)
 						BANKING();
@@ -1374,7 +1375,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 				withdrawTabOrRune(2);
 				sleep(200,300);
 			
-			if (anti.length == 0 ){
+			if (anti.length < 2 ){
 				
 				withdraw(1, antiPoison);
 				sleep(200,300);
@@ -1683,9 +1684,12 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 				}
 			}
 			else if (currTask.equals( "cave_crawlers")){
-				if(anti.length > 0)
-					return true;
+				
+				if(anti.length < 2)
+					return false;
+				
 				if(useTabs || useTabC){
+					println("Step 2");
 					if(ctab.length > 0)
 						return true;
 				}
@@ -1695,7 +1699,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 					else
 						return true;
 				}
-		}
+			}
 			else if (currTask.equals( "cave_slimes")){
 				if(tinder.length > 0 && lightsource.length > 0 && anti.length > 0 && (checkForHelm(0) || spiny.length > 0))
 					return true;
@@ -1709,7 +1713,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 					else
 						return true;
 				}
-		}
+			}
 			else if (currTask.equals( "cows")){
 				if(useTabs || useTabF){
 					if(ftab.length > 0)
@@ -2167,7 +2171,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 			new RSTile(2754, 3599, 0), new RSTile(2761, 3598, 0), new RSTile(2770, 3595, 0), 
 			new RSTile(2778, 3595, 0), new RSTile(2786, 3597, 0), new RSTile(2789, 3602, 0), 
 			new RSTile(2792, 3609, 0), new RSTile(2795, 3615, 0) };
-	RSTile[] caveCrawlerArea = {new RSTile(2778, 10004, 0), new RSTile(2812, 9988, 0)};
+	RSTile[] caveCrawlerArea = {new RSTile(2778, 10004, 0), new RSTile(2815, 9985, 0)};
 	
 	
 	
