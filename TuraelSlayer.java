@@ -2326,8 +2326,9 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 		sleep(100,150);
 		
 		if (currTask.equals( "banshees")){
-			
+			Walking.walking_timeout = 10000L;
 			if(!inArea(awkwardBansheeSq[0], awkwardBansheeSq[1], pos()) && inArea(bansheeArea[0], bansheeArea[1], pos())){
+				Walking.walking_timeout = 5000L;
 				return true;
 			}
 			else if (inArea(awkwardBansheeSq[0], awkwardBansheeSq[1], pos())){
@@ -2378,7 +2379,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 			}
 			else
 				useTeleport(5);
-			
+			Walking.walking_timeout = 5000L;
 		}
 		
 		else if (currTask.equals( "bats")){
@@ -2620,7 +2621,9 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 		}
 		
 		else if (currTask.equals( "crawling_hands")){
+			Walking.walking_timeout = 10000L;
 			if(pos().distanceTo(crawlingHandsT)<=15){
+				Walking.walking_timeout = 5000L;
 				return true;
 			}
 			else if (inArea(slayerTowerDoorArea[0], slayerTowerDoorArea[1], pos())){
@@ -2662,6 +2665,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 			}
 			else
 				useTeleport(5);
+			Walking.walking_timeout = 5000L;
 		}
 		
 		else if (currTask.equals( "dogs")){
