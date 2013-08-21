@@ -237,8 +237,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 					FIGHT();
 			}
 			else{
-				
-				if (!haveReqEquip(0) || Inventory.find(loot).length > 0){
+				if (!haveReqEquip(0)){
 					if(pos().distanceTo(varrockBankT) <= 8)
 						BANKING();
 					else
@@ -1292,8 +1291,6 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 		RSItem[] anti = Inventory.find(antiPoison);
 		RSItem[] shanty = Inventory.find(SHANTY);
 		
-		Banking.depositAllExcept(depositAllExcept);
-		sleep(200,300);
 		Mouse.clickBox(471, 78, 478, 84, 1);
 		sleep(200,300);
 		
@@ -1572,7 +1569,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 		RSItem[] anti = Inventory.find(antiPoison);
 		RSItem[] shanty = Inventory.find(SHANTY);
 		
-		println("step 1");
+		
 		if (option == 0){
 			
 			if (games.length == 0){
@@ -1602,11 +1599,12 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 				}
 				
 			}
-			
+			println("step 1");
 			if (currTask.equals("banshees")) {
-				if (ecto.length > 0 && (checkForHelm(1) || earmuffs.length > 0))
+				if (ecto.length > 0 && (checkForHelm(1) || earmuffs.length > 0)){
+					println("we got our stuff");
 					return true;
-				
+				}
 			}
 			else if (currTask.equals( "bats")){
 				
