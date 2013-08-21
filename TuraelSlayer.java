@@ -1,4 +1,4 @@
-package scripts.AIOSlayer;
+package scripts;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -10,6 +10,7 @@ import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.util.HashMap;
 
 import org.tribot.api.DynamicClicking;
@@ -22,6 +23,7 @@ import org.tribot.api2007.Camera;
 import org.tribot.api2007.ChooseOption;
 import org.tribot.api2007.Game;
 import org.tribot.api2007.GameTab;
+import org.tribot.api2007.GroundItems;
 import org.tribot.api2007.Interfaces;
 import org.tribot.api2007.Inventory;
 import org.tribot.api2007.NPCChat;
@@ -31,9 +33,11 @@ import org.tribot.api2007.PathFinding;
 import org.tribot.api2007.Player;
 import org.tribot.api2007.Players;
 import org.tribot.api2007.Projection;
+import org.tribot.api2007.Screen;
 import org.tribot.api2007.Skills;
 import org.tribot.api2007.Walking;
 import org.tribot.api2007.WebWalking;
+import org.tribot.api2007.types.RSGroundItem;
 import org.tribot.api2007.types.RSInterface;
 import org.tribot.api2007.types.RSItem;
 import org.tribot.api2007.types.RSModel;
@@ -47,7 +51,7 @@ import org.tribot.script.interfaces.MessageListening07;
 import org.tribot.script.interfaces.Painting;
 import org.tribot.script.interfaces.EventBlockingOverride;
 
-@ScriptManifest(authors = { "Yaw hide" }, version = 0.21, category = "Slayer", name = "Yaw hide's Easy Slayer")
+@ScriptManifest(authors = { "Yaw hide" }, version = 0.311, category = "Slayer", name = "Yaw hide's Easy Slayer")
 public class TuraelSlayer extends Script implements MessageListening07, Painting, EventBlockingOverride{
 
 	//food Ids
@@ -56,9 +60,43 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 	int[] junk = { 886, 1539, 9003, 229, 1623, 1355, 440, 7767, 117,
 			6963, 554, 556, 829, 1971, 687, 464, 1973, 1917, 808, 1454, 6180,
 			6965, 1969, 6183, 6181 };
-	int[] loot = {563, 560, 561, 562, 564, 565, 566, 7937};
+	int[] loot = {563, 560, 561, 562, 564, 565, 566, 7937, 816, 1747, 536, 9142, 868, 563,
+			1615, 1319, 1373, 1247, 1303, 1249, 1123, 1149, 1201,
+			1186, 1113, 1079, 892, 565, 560, 561, 563, 2361, 2366, 443, 
+			985, 987, 2363, 1617, 1619, 574};
 	String[] names = {"Law rune", "Death rune", "Nature rune", "Chaos rune", "Cosmic rune", 
-			"Blood rune", "Soul rune", "Pure essence" };
+			"Blood rune", "Soul rune", "Pure essence", "Adamant dart(p)",
+			"Black dragonhide", "Dragon bones", "Mithril bolts",
+			"Rune knife", "Law rune", "Dragonstone",
+			"Rune 2h sword", "Rune battleaxe",
+			"Rune spear", "Rune longsword", "Dragon spear",
+			"Adamant platebody", "Dragon med helm", 
+			"Rune kiteshield", "Rune sq shield", "Rune chainbody",
+			"Rune platelegs", "Rune arrow", "Blood rune", "Death rune",
+			"Nature rune", "Law rune", "Adamantite bar", "Shield left half",
+			"Silver ore", "Half of a key", "Half of a key",
+			"Runite bar", "Uncut diamond", "Uncut ruby", "Air orb",};
+	
+	//TODO LOOT()
+	public void LOOT(){
+		RSGroundItem[] Nests = GroundItems.findNearest(loot);
+		
+		if (!Inventory.isFull() && Nests.length > 0) {
+			if(checkLootInArea(Nests[0])){
+				if (!Nests[0].isOnScreen()) {
+					Walking.clickTileMM(Nests[0].getPosition(), 1);
+					sleep(100, 150);
+					Camera.turnToTile(Nests[0].getPosition());
+					sleep(200, 300);
+					waitIsMovin();
+				}
+				String str = map.get(Nests[0].getID());
+				Nests[0].click("Take " + str);
+				waitForInv(Nests[0].getID());
+			}
+		}
+	}
+	
 	
 	HashMap<Integer, String> map = new HashMap<Integer, String>(loot.length);
 	
@@ -93,28 +131,25 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 	
 	//antiban stuff
 	private long antiban = System.currentTimeMillis();
-	private int[] evilchicken = { 2465, 2467 };
-	private int swarm = 407;
+	//private int[] evilchicken = { 2465, 2467 };
+	//private int swarm = 407;
 	
 	// Slayer teleport items
 	int[] gamesNecklace = {3853, 3855, 3857, 3859, 3861, 3863, 3865, 3867}; // goes from 8 to 1
 	int[] rod = {2552, 2554, 2556, 2558, 2560, 2562, 2564, 2566};
-	int[] antiPoison = {2448, 181, 193, 2446, 175}; // start with super 4-1
+	int[] antiPoison = {2448, 181, 183, 185, 193, 2446, 175}; // start with super 4-1
 	int[] lightsources = {4531, 4539, 4550};
-	int[] depositAllExcept = { 3853, 3855, 3857, 3859, 3861, 3863, 3865, slayGem, VTAB};
+	int[] depositAllExcept = { 3853, 3855, 3857, 3859, 3861, 3863, 3865, slayGem, VTAB, FIRE, LAW, AIR};
 	
 	
 	String lastServerMessage;
 	int numLeftToKill;
 	String currTask;
 
-	
-	
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
-		Walking.control_click = true;
-		Walking.walking_timeout = 5000L;
+		
+		onStart();
 		
 		do{
 		getNumSlayTask();
@@ -145,10 +180,9 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 				FIGHT();
 		}
 		else{
-			println("I am NOT at my task");
+			println("I am NOT at my task pre");
 			if (!haveReqEquip(0)){
-				if(pos().distanceTo(varrockBankT) <= 8 || pos().distanceTo(turaelT) <=10 
-						|| Banking.openBankBooth() || Banking.openBankBanker())
+				if(pos().distanceTo(varrockBankT) <= 8)
 					BANKING();
 				else
 					GOTO_BANK();				
@@ -203,11 +237,9 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 					FIGHT();
 			}
 			else{
-				if (!haveReqEquip(0)){
-					if (pos().distanceTo(turaelT) <=10)
-						GOTO_BANK();
-					else if(pos().distanceTo(varrockBankT) <= 8 || Banking.openBankBooth() 
-							|| Banking.openBankBanker())
+				println("i am not at my task pre 2");
+				if (!haveReqEquip(0) || Inventory.find(loot).length > 0){
+					if(pos().distanceTo(varrockBankT) <= 8)
 						BANKING();
 					else
 						GOTO_BANK();				
@@ -223,7 +255,258 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 
 	
 	
+	public void onStart(){
+		Mouse.setSpeed(General.random(150, 170));
+		sleep(200,300);
+		Walking.control_click = true;
+		Walking.walking_timeout = 5000L;
+		putMap();
+		sleep(200, 250);
+		
+		useTabs = false;
+		
+		checkMagicLevel();
+		sleep(100, 150);
+		
+	}
+	
+	boolean useTabV = true;
+	boolean useTabF = true;
+	boolean useTabC = true;
+	boolean useTabL = true;
+	boolean useTabA = true;
+	boolean useTabs;
+	//TODO checkMagicLevel
+	public void checkMagicLevel(){
+		int lv = Skills.getCurrentLevel("Magic");
+		if(!useTabs){
+			if (lv < 31 && lv >= 25){
+				useTabV = false;
+			}
+			else if (lv < 37){
+				useTabV = false;
+				useTabL = false;
+			}
+			else if (lv < 45){
+				useTabV = false;
+				useTabL = false;
+				useTabF = false;
+			}
+			else if (lv < 51){
+				useTabV = false;
+				useTabL = false;
+				useTabF = false;
+				useTabC = false;
+			}
+			else if (lv >= 51){
+				useTabV = false;
+				useTabL = false;
+				useTabF = false;
+				useTabC = false;
+				useTabA = false;
+			}
+			else
+				useTabs = true;
+		}
+	}
 
+	public void withdrawTabOrRune(int destination){ // 0 is V, 1 is F, 2 is C, 3 is L, 4 is A
+		RSItem[] law = Inventory.find(LAW);
+		RSItem[] earth = Inventory.find(EARTH);
+		RSItem[] air = Inventory.find(AIR);
+		RSItem[] water = Inventory.find(WATER);
+		RSItem[] fire = Inventory.find(FIRE);
+		RSItem[] vtab = Inventory.find(VTAB);
+		RSItem[] ftab = Inventory.find(FTAB);
+		RSItem[] ctab = Inventory.find(CTAB);
+		RSItem[] ltab = Inventory.find(LTAB);
+		RSItem[] atab = Inventory.find(ATAB);
+		
+		if(useTabs){
+			switch(destination){
+			case 0:
+				if(vtab.length == 0){
+					withdraw(10, VTAB);
+					sleep(200,300);
+				}
+				break;
+			case 1:
+				if(ftab.length == 0){
+					withdraw(10, FTAB);
+					sleep(200,300);
+				}
+				break;
+			case 2:
+				if(ctab.length == 0){
+					withdraw(10, CTAB);
+					sleep(200,300);
+				}
+				break;
+			case 3:
+				if(ltab.length == 0){
+					withdraw(10, LTAB);
+					sleep(200,300);
+				}
+				break;
+			case 4:
+				if(atab.length == 0){
+					withdraw(10, ATAB);
+					sleep(200,300);
+				}
+				break;
+			}
+		}
+		else{
+			switch(destination){
+			case 0:
+				if(useTabV){
+					if(vtab.length == 0){
+						withdraw(10, VTAB);
+						sleep(200,300);
+					}
+				}
+				else {
+					if(!haveRune(1)){
+						withdraw(10, LAW);
+						sleep(200,300);
+					}
+					if(!haveRune(2)){
+						withdraw(10, AIR);
+						sleep(200,300);
+					}
+					if(!haveRune(3)){
+						withdraw(10, FIRE);
+						sleep(200,300);
+					}
+				}
+				break;
+			case 1: 
+				if(useTabF){
+				if(ftab.length == 0){
+					withdraw(10, FTAB);
+					sleep(200,300);
+				}
+				}
+				else{
+					if(!haveRune(1)){
+						withdraw(10, LAW);
+						sleep(200,300);
+					}
+					if(!haveRune(2)){
+						withdraw(10, AIR);
+						sleep(200,300);
+					}
+					if(!haveRune(4)){
+						withdraw(10, WATER);
+						sleep(200,300);
+					}
+				}
+				break;
+			case 2:
+				if(useTabC){
+				if(ctab.length == 0){
+					withdraw(10, CTAB);
+					sleep(200,300);
+				}
+				}
+				else {
+					if(!haveRune(1)){
+						withdraw(10, LAW);
+						sleep(200,300);
+					}
+					if (!haveRune(2)){
+						withdraw(10, AIR);
+						sleep(200,300);	
+					}
+				}
+				break;
+			case 3:
+				if(useTabL){
+				if(ltab.length == 0){
+					withdraw(10, LTAB);
+					sleep(200,300);
+				}
+				}
+				else{ 
+					if(!haveRune(1)){ 
+						withdraw(10, LAW);
+						sleep(200,300);
+					}
+					if(!haveRune(2)){
+						withdraw(10, AIR);
+						sleep(200,300);
+					}
+					if(!haveRune(0)){
+						withdraw(10, EARTH);
+						sleep(200,300);
+					}
+				}
+				break;
+			case 4:
+				
+				if(useTabA){
+					if (atab.length == 0) {
+						withdraw(10, ATAB);
+						sleep(200, 300);
+					}
+				}
+				else{ 
+					if(!haveRune(1)){ 
+						withdraw(10, LAW);
+						sleep(200,300);
+					}
+					if (!haveRune(4)){
+						withdraw(10, WATER);
+						sleep(200,300);	
+					}
+				}
+				break;
+			}
+		}
+	}
+	
+	public boolean haveRune(int option){ //Earth 0, Law 1, Air 2, Fire 3, Water 4, 
+		RSItem[] law = Inventory.find(LAW);
+		RSItem[] earth = Inventory.find(EARTH);
+		RSItem[] air = Inventory.find(AIR);
+		RSItem[] water = Inventory.find(WATER);
+		RSItem[] fire = Inventory.find(FIRE);
+		switch(option){
+		case 0:
+			if(earth.length == 0)
+				return false;
+			break;
+		case 1:
+			if(law.length == 0)
+				return false;
+			else{
+				if(law[0].getStack() < 2)
+					return false;
+			}
+			break;
+		case 2:
+			if(air.length == 0)
+				return false;
+			else{
+				if(air[0].getStack() < 5)
+					return false;
+			}
+			break;
+		case 3:
+			if(fire.length == 0)
+				return false;
+			break;
+		case 4:
+			if(water.length == 0)
+				return false;
+			else{
+				if(water[0].getStack() < 2)
+					return false;
+			}
+			break;
+		}
+		return true;
+	}
 	
 	public void useGameNeck(){
 		state="Using games Neck";
@@ -243,7 +526,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 			}
 		}
 	}
-	//TODO 
+	//TODO useROD
 	public void useROD(){
 		state = "Using ROD";
 		GameTab.open(org.tribot.api2007.GameTab.TABS.INVENTORY);
@@ -274,10 +557,10 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 	
 	RSTile[] mainCastle = {new RSTile(2892, 3569, 0), new RSTile(2904, 3558, 0)};
 	RSTile[] innerDoorsTile = {new RSTile(2898, 3558, 0), new RSTile(2899, 3558, 0)};
-	
+	/*
 	private RSTile[] toTuraelPath = { new RSTile(2899, 3553, 0), new RSTile(2903, 3546, 0), 
 			new RSTile(2913, 3546, 0), new RSTile(2921, 3542, 0), new RSTile(2928, 3536, 0) };
-	
+	*/
 	RSTile stairAtGameNeckTele =  new RSTile(2207, 4935, 0);
 	
 	public void gotoTurael(){
@@ -330,7 +613,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 	
 	
 	//getting a new Task
-	//TODO
+	//TODO getTask
 	RSTile[] TuraelArea = {new RSTile(2925, 3542, 0), new RSTile(2932, 3533, 0)};
 		
 	public boolean getTask(){
@@ -371,7 +654,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 		RSItem[] SLAYGEM = Inventory.find(slayGem);
 		
 		if (SLAYGEM.length > 0){
-			Mouse.setSpeed(General.random(330,350));
+			//Mouse.setSpeed(General.random(330,350));
 			
 			if (SLAYGEM[0].click("Check")){
 				sleep(1500,1800);
@@ -387,12 +670,6 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 	}
 	
 	
-	// goto skeleton task
-	
-	private RSTile[] toTrapdoorEdge = { new RSTile(3094, 3491, 0), new RSTile(3093, 3480, 0), 
-			new RSTile(3094, 3471, 0), new RSTile(3095, 3469, 0) };
-	RSTile[] edgeBankArea = { new RSTile(3096, 3486, 0), new RSTile(3089, 3492, 0) };
-	
 	
 	// goto zombie task, uses similarities in toSkeletons method
 	private RSTile[] toZombies = { new RSTile(3105, 9909, 0), new RSTile(3115, 9909, 0), 
@@ -405,7 +682,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 
 	
 	// goto lumby bank
-	private RSTile[] toStairs1F = { new RSTile(3221, 3218, 0), new RSTile(3214, 3214, 0), new RSTile(3209, 3211, 0) };
+	//private RSTile[] toStairs1F = { new RSTile(3221, 3218, 0), new RSTile(3214, 3214, 0), new RSTile(3209, 3211, 0) };
 	RSTile toStairsTile = new RSTile(3204, 3207, 0);
 	RSTile toStairs1FTile = new RSTile(3204, 3207, 1);
 	RSTile toStairs2FTile = new RSTile(3204, 3207, 2);
@@ -427,24 +704,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 		Walking.walkPath(toVWBankTeleport);
 	}
 	
-	// goto edgeville bank from varrock west bank
-	private RSTile[] toEdgeFromVWBank = { new RSTile(3183, 3436, 0), new RSTile(3175, 3428, 0), 
-			new RSTile(3162, 3424, 0), new RSTile(3149, 3421, 0), new RSTile(3136, 3422, 0), 
-			new RSTile(3125, 3419, 0), new RSTile(3111, 3420, 0), new RSTile(3098, 3422, 0), 
-			new RSTile(3091, 3432, 0), new RSTile(3091, 3444, 0), new RSTile(3089, 3454, 0), 
-			new RSTile(3087, 3464, 0), new RSTile(3099, 3471, 0), new RSTile(3095, 3481, 0), 
-			new RSTile(3093, 3490, 0) };
-	
-	// goto Shanty Pass
-	
-	private RSTile[] toShantyPath = { new RSTile(3309, 3235, 0), new RSTile(3309, 3224, 0), 
-			new RSTile(3311, 3211, 0), new RSTile(3312, 3201, 0), new RSTile(3310, 3191, 0),
-			new RSTile(3309, 3181, 0), new RSTile(3308, 3172, 0), new RSTile(3308, 3161, 0), 
-			new RSTile(3307, 3153, 0), new RSTile(3306, 3144, 0), new RSTile(3303, 3137, 0), 
-			new RSTile(3303, 3128, 0), new RSTile(3306, 3120, 0) };
-	
-	
-	
+		
 	/*
 	// icefiends stuff
 	private RSTile[] fromEdgyToIceFiendsPath = { new RSTile(3087, 3493, 0), new RSTile(3083, 3501, 0), 
@@ -542,14 +802,14 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 	RSTile skeletonMiddle = new RSTile(3131, 9911, 0);	
 	RSTile[] zombieArea = {new RSTile(3136, 9910, 0), new RSTile(3151, 9876, 0)};
 	RSTile beforeIceFiends = new RSTile(3031, 3473, 0);
-	
+	/*
 	private RSTile[] toLizards = { new RSTile(3304, 3113, 0), new RSTile(3309, 3108, 0), 
 			new RSTile(3316, 3101, 0), new RSTile(3322, 3096, 0), new RSTile(3327, 3090, 0), 
 			new RSTile(3334, 3085, 0), new RSTile(3341, 3079, 0), new RSTile(3348, 3081, 0), 
 			new RSTile(3355, 3081, 0), new RSTile(3361, 3082, 0), new RSTile(3368, 3082, 0), 
 			new RSTile(3375, 3082, 0), new RSTile(3384, 3081, 0), new RSTile(3391, 3076, 0), 
 			new RSTile(3398, 3071, 0), new RSTile(3406, 3064, 0) };
-	
+	*/
 	
 	
 
@@ -573,7 +833,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 	
 	
 	/***** killing da monstas *****/
-	//TODO
+	//TODO FIGHT
 	public void FIGHT(){
 		
 		state = "Fight";
@@ -606,7 +866,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 				Mouse.setSpeed(General.random(150, 170));
 			} 
 			else {
-				Walking.walkPath(Walking.generateStraightPath(batMiddle));
+				Walking.walkPath(toBat);
 				waitIsMovin();
 			}
 				
@@ -720,7 +980,8 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 				Mouse.setSpeed(General.random(150, 170));
 			} 
 			else {
-				Walking.walkPath(Walking.generateStraightPath(dwarfMiddle));
+				println("Walking to the middle tile");
+				WebWalking.walkTo(dwarfMiddle);
 				waitIsMovin();
 			}
 				
@@ -931,24 +1192,24 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 	RSTile[] desertArea = {new RSTile(3223, 3115, 0), new RSTile(3430, 3030, 0) };
 	
 	
-	
+	//TODO GOTO_BANK
 	public void GOTO_BANK() {
 		
 		if (pos().distanceTo(varrockBankT) <=7){
 			BANKING();
 		}
 		else {
-		state = "Going to bank";
-		Mouse.setSpeed(General.random(140, 170));
-		
-		println("Going to closeset bank");
-		if (pos().distanceTo(varrockTeleT) > 50)
-			emergTele();
-		sleep(200, 300);
-		WebWalking.walkToBank();
-		sleep(50, 100);
+			state = "Going to bank";
+			Mouse.setSpeed(General.random(140, 170));
 
-		println("done webwalking");
+			println("Going to closeset bank");
+			if (pos().distanceTo(varrockTeleT) > 50)
+				emergTele();
+			sleep(200, 300);
+			WebWalking.walkToBank();
+			sleep(50, 100);
+
+			println("done webwalking");
 		}
 	}
 	
@@ -996,7 +1257,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 		return false;
 	}
 	
-	//TODO
+	//TODO bank
 	public void bank(){
 		
 		Banking.depositAllExcept(depositAllExcept);
@@ -1014,13 +1275,13 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 		RSItem[] lightsource = Inventory.find(lightsources);
 		
 		RSItem[] tinder = Inventory.find(TINDER);
-		RSItem[] salt = Inventory.find(SALT);
+		//RSItem[] salt = Inventory.find(SALT);
 		RSItem[] spiny = Inventory.find(SPINY);
-		//RSItem[] law = Inventory.find(LAW);
-		//RSItem[] earth = Inventory.find(EARTH);
-		//RSItem[] air = Inventory.find(AIR);
-		//RSItem[] water = Inventory.find(WATER);
-		//RSItem[] fire = Inventory.find(FIRE);
+		RSItem[] law = Inventory.find(LAW);
+		RSItem[] earth = Inventory.find(EARTH);
+		RSItem[] air = Inventory.find(AIR);
+		RSItem[] water = Inventory.find(WATER);
+		RSItem[] fire = Inventory.find(FIRE);
 		RSItem[] waterskin = Inventory.find(WATERSKIN);
 		RSItem[] cooler = Inventory.find(COOLER);
 		RSItem[] ecto = Inventory.find(ECTO);
@@ -1032,6 +1293,8 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 		RSItem[] shanty = Inventory.find(SHANTY);
 		
 		Banking.depositAllExcept(depositAllExcept);
+		sleep(200,300);
+		Mouse.clickBox(471, 78, 478, 84, 1);
 		sleep(200,300);
 		
 		if (games.length == 0){
@@ -1048,9 +1311,8 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 			sleep(200,300);
 		}
 		
-		if(vtab.length > 0 && vtab[0].getStack() < 10){
-			withdraw(20, VTAB);
-			sleep(200,300);
+		if(vtab.length == 0 || (vtab.length > 0 && vtab[0].getStack() < 10)){
+			withdrawTabOrRune(0);
 		}
 		
 		
@@ -1064,30 +1326,25 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 				
 		}
 		else if (currTask.equals( "bats")){
-			if(ftab.length == 0){
-				withdraw(10, FTAB);
-				sleep(200,300);
-			}
-				
+			withdrawTabOrRune(1);
+			sleep(200,300);
 		}
 		else if (currTask.equals( "bears")){
-			if(atab.length == 0){
-				withdraw(10, ATAB);
-				sleep(200,300);
-			}
+			withdrawTabOrRune(4);
+			sleep(200,300);
+			
 				
 		}
 		else if (currTask.equals( "birds")){ // no idea atm
 			if(atab.length == 0){
-				withdraw(10, ATAB);
+				withdrawTabOrRune(4);
 				sleep(200,300);
 			}
 				
 		}
 		else if (currTask.equals("cave_bugs")){
 			if(tinder.length == 0 && ltab.length == 0 && lightsource.length == 0 && spiny.length == 0){
-				withdraw(10, LTAB);
-				sleep(200,300);
+				
 				withdraw(1, lightsources);
 				sleep(200,300);
 				withdraw(1, SPINY);
@@ -1095,23 +1352,28 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 				withdraw(1, TINDER);
 				sleep(200,300);
 			}
+			withdrawTabOrRune(3);
+			sleep(200,300);
 		}
 		else if (currTask.equals( "cave_crawlers")){
-			if(ctab.length == 0){
-				withdraw(10, CTAB);
+			
+				withdrawTabOrRune(2);
 				sleep(200,300);
-			}
+			
 			if (anti.length == 0 ){
 				
+				withdraw(1, antiPoison);
+				sleep(200,300);
 				withdraw(1, antiPoison);
 				sleep(200,300);
 			}
 		}
 		else if (currTask.equals( "cave_slimes")){
-			if(tinder.length == 0 && ltab.length == 0 && lightsource.length == 0 && anti.length == 0 && spiny.length == 0){
-				withdraw(10, LTAB);
-				sleep(200,300);
+			if(tinder.length == 0 && lightsource.length == 0 && anti.length == 0 && spiny.length == 0){
+				
 				withdraw(1, lightsources[0]);
+				sleep(200,300);
+				withdraw(1, antiPoison);
 				sleep(200,300);
 				withdraw(1, antiPoison);
 				sleep(200,300);
@@ -1120,12 +1382,14 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 				withdraw(1, TINDER);
 				sleep(200,300);
 			}
+			withdrawTabOrRune(3);
+			sleep(200,300);
 		}
 		else if (currTask.equals( "cows")){
-			if(ftab.length == 0){
-				withdraw(10, FTAB);
+			
+				withdrawTabOrRune(1);
 				sleep(200,300);
-			}
+			
 		}
 		else if (currTask.equals( "crawling_hands")){ 
 			if(ecto.length == 0){
@@ -1135,66 +1399,65 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 				
 		}
 		else if (currTask.equals( "dogs")){
-			if(atab.length == 0){
-				withdraw(10, ATAB);
+		
+				withdrawTabOrRune(4);
 				sleep(200,300);
-			}
+			
 				
 		}
 		else if (currTask.equals( "dwarves")){ 
-			if(vtab.length == 0){
-				withdraw(10, VTAB);
+			
+				withdrawTabOrRune(0);
 				sleep(200,300);
-			}
+			
 				
 		}
 		else if (currTask.equals( "ghosts")){
-			if(ftab.length == 0){
-				withdraw(10, FTAB);
+	
+				withdrawTabOrRune(1);
 				sleep(200,300);
-			}
+			
 				
 		}
 		else if (currTask.equals( "goblins")){
-			if(ltab.length == 0){
-				withdraw(10, LTAB);
+	
+				withdrawTabOrRune(3);
 				sleep(200,300);
-			}
+			
 				
 		}
 		else if (currTask.equals( "icefiends")){
-			if(ftab.length == 0){
-				withdraw(10, FTAB);
+		
+				withdrawTabOrRune(1);
 				sleep(200,300);
-			}
+			
 				
 		}
 		else if (currTask.equals("kalphite")){ 
 			if(ROPE.length == 0 && waterskin.length == 0 && shanty.length == 0){
-				
 				withdraw(1, rope);
 				sleep(200,300);
-				withdraw(1, WATERSKIN[0]);
+				withdraw(1, WATERSKIN);
 				sleep(200,300);
 				withdraw(5, SHANTY);
 				sleep(200,300);
-				withdraw(1, rod[0]);
+				withdraw(1, rod);
 				sleep(200,300);
 			}
 				
 		}
 		else if (currTask.equals( "minotaurs")){ 
-			if(vtab.length == 0){
-				withdraw(10, VTAB);
+			
+				withdrawTabOrRune(0);
 				sleep(200,300);
-			}
+			
 				
 		}
 		else if (currTask.equals( "monkeys")){
-			if(ftab.length == 0){
-				withdraw(10, FTAB);
+			
+				withdrawTabOrRune(1);
 				sleep(200,300);
-			}
+			
 			if (coins.length > 0){
 				if(coins[0].getStack() < 10000){
 					withdraw(10000, COINS);
@@ -1208,31 +1471,31 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 				
 		}
 		else if (currTask.equals( "rats")){
-			if(vtab.length == 0){
-				withdraw(10, VTAB);
+			
+				withdrawTabOrRune(0);
 				sleep(200,300);
-			}
+			
 				
 		}
 		else if (currTask.equals( "scorpions")){
 			if(ROD.length == 0){
-				withdraw(1, rod[0]);
+				withdraw(1, rod);
 				sleep(200,300);
 			}
 			
 		}
 		else if (currTask.equals( "skeletons")){
-			if(vtab.length == 0){
-				withdraw(10, VTAB);
+			
+				withdrawTabOrRune(0);
 				sleep(200,300);
-			}
+			
 			
 		}
 		else if (currTask.equals( "spiders")){
-			if(ltab.length == 0){
-				withdraw(10, LTAB);
+		
+				withdrawTabOrRune(3);
 				sleep(200,300);
-			}
+			
 			
 		}
 		else if (currTask.equals( "werewolves")){
@@ -1243,17 +1506,17 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 				
 		}
 		else if (currTask.equals( "wolves")){ 
-			if(ctab.length == 0){
-				withdraw(10, CTAB);
+		
+				withdrawTabOrRune(2);
 				sleep(200,300);
-			}
+			
 				
 		}
 		else if (currTask.equals( "desert_lizards")){
 			if(ROD.length == 0 && waterskin.length == 0 && shanty.length == 0 && cooler.length < numLeftToKill+10){
-				withdraw(1, rod[0]);
+				withdraw(1, rod);
 				sleep(200,300);
-				withdraw(8, WATERSKIN[0]);
+				withdraw(8, WATERSKIN);
 				sleep(200,300);
 				withdraw(5, SHANTY);
 				sleep(200,300);
@@ -1263,10 +1526,10 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 				
 		}
 		else if (currTask.equals( "zombies")){ 
-			if(vtab.length == 0){
-				withdraw(10, VTAB);
+	
+				withdrawTabOrRune(0);
 				sleep(200,300);
-			}
+			
 		}		
 		
 		Banking.close();
@@ -1275,9 +1538,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 		BANK_SECTION = 0;
 	}
 	
-	//TODO
-	
-	
+	//TODO haveReqEquip
 	public boolean haveReqEquip(int option){
 		state="item check";
 		RSItem[] coins = Inventory.find(COINS);
@@ -1292,12 +1553,12 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 		
 		RSItem[] tinder = Inventory.find(TINDER);
 		//RSItem[] salt = Inventory.find(SALT);
-		RSItem[] spiny = Inventory.find(SPINY);/*
+		RSItem[] spiny = Inventory.find(SPINY);
 		RSItem[] law = Inventory.find(LAW);
 		RSItem[] earth = Inventory.find(EARTH);
 		RSItem[] air = Inventory.find(AIR);
 		RSItem[] water = Inventory.find(WATER);
-		RSItem[] fire = Inventory.find(FIRE);*/
+		RSItem[] fire = Inventory.find(FIRE);
 		RSItem[] waterskin = Inventory.find(WATERSKIN);
 		RSItem[] cooler = Inventory.find(COOLER);
 		RSItem[] ecto = Inventory.find(ECTO);
@@ -1307,7 +1568,10 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 		RSItem[] food = Inventory.find(foodID);
 		RSItem[] anti = Inventory.find(antiPoison);
 		RSItem[] shanty = Inventory.find(SHANTY);
+		
+		println("step 1");
 		if (option == 0){
+			
 			if (games.length == 0){
 				println("Dont have either a games necklace");
 				return false;
@@ -1320,116 +1584,301 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 				println("Dont have slayer gem");
 				return false;
 			}
-			else if (vtab.length == 0){
-				println("Dont have  varrock tabs");
-				return false;
+			else if (useTabs){
+				
+				if (vtab.length == 0){
+					println("Dont have  varrock tabs");
+					return false;
+				}
+				
 			}
-			else if (currTask.equals("banshees")) {
+			else if (!useTabs){
+				if (!haveRune(1) || !haveRune(2) || !haveRune(3)){
+					println("Dont have varrock runes");
+					return false;
+				}
+				
+			}
+			
+			if (currTask.equals("banshees")) {
 				if (ecto.length > 0 && (checkForHelm(1) || earmuffs.length > 0))
 					return true;
+				
 			}
 			else if (currTask.equals( "bats")){
-				if(ftab.length > 0)
-					return true;
+				
+				if(useTabs || useTabF){
+					
+					if(ftab.length > 0)
+						return true;
+				}
+				else{
+					
+					if (!haveRune(1) || !haveRune(2) || !haveRune(4)){
+						return false;
+					}
+					else
+						return true;
+				}
+				
 			}
 			else if (currTask.equals( "bears")){
-				if(atab.length > 0)
-					return true;
+				
+				if(useTabs || useTabA){
+					
+					if(atab.length > 0)
+						return true;
+				}
+				else{
+					println("step 4");
+					if (!haveRune(1) || !haveRune(4)){
+						
+						return false;
+					}
+					else
+						return true;
+				}
 			}
 			else if (currTask.equals( "birds")){ // no idea atm
-			if(atab.length > 0)
-				return true;
+				if(useTabs || useTabA){
+					if(atab.length > 0)
+						return true;
+				}
+				else{
+					if (!haveRune(1) || !haveRune(4))
+						return false;
+					else
+						return true;
+				}
 			}
 			else if (currTask.equals("cave_bugs")){
-				if(tinder.length > 0 && ltab.length > 0 && lightsource.length > 0 && (checkForHelm(0) || spiny.length > 0))
+				if(tinder.length > 0 && lightsource.length > 0 && (checkForHelm(0) || spiny.length > 0))
 					return true;
+				if(useTabs || useTabL){
+					if(ltab.length > 0)
+						return true;
+				}
+				else{
+					if (!haveRune(1) || !haveRune(0) || !haveRune(2))
+						return false;
+					else
+						return true;
+				}
 			}
-		else if (currTask.equals( "cave_crawlers")){
-			if(ctab.length > 0 && anti.length > 0)
-				return true;
+			else if (currTask.equals( "cave_crawlers")){
+				if(anti.length > 0)
+					return true;
+				if(useTabs || useTabC){
+					if(ctab.length > 0)
+						return true;
+				}
+				else{
+					if (!haveRune(1) || !haveRune(2))
+						return false;
+					else
+						return true;
+				}
 		}
-		else if (currTask.equals( "cave_slimes")){
-			if(tinder.length > 0 && ltab.length > 0 && lightsource.length > 0 && anti.length > 0 && (checkForHelm(0) || spiny.length > 0))
-				return true;
+			else if (currTask.equals( "cave_slimes")){
+				if(tinder.length > 0 && lightsource.length > 0 && anti.length > 0 && (checkForHelm(0) || spiny.length > 0))
+					return true;
+				if(useTabs || useTabL){
+					if(ltab.length > 0)
+						return true;
+				}
+				else{
+					if (!haveRune(1) || !haveRune(0) || !haveRune(2))
+						return false;
+					else
+						return true;
+				}
 		}
-		else if (currTask.equals( "cows")){
-			if(ftab.length > 0)
-				return true;
+			else if (currTask.equals( "cows")){
+				if(useTabs || useTabF){
+					if(ftab.length > 0)
+						return true;
+				}
+				else{
+					if (!haveRune(1) || !haveRune(2) || !haveRune(4))
+						return false;
+					else
+						return true;
+				}
 		}
-		else if (currTask.equals( "crawling_hands")){
+			else if (currTask.equals( "crawling_hands")){
 			if(ecto.length > 0)
 				return true;
 		}
-		else if (currTask.equals( "dogs")){
-			if(atab.length > 0)
-				return true;
+			else if (currTask.equals( "dogs")){
+				if(useTabs || useTabA){
+					if(atab.length > 0)
+						return true;
+				}
+				else{
+					if (!haveRune(1) || !haveRune(4))
+						return false;
+					else
+						return true;
+				}
 		}
-		else if (currTask.equals( "dwarves")){ 
-			if(vtab.length > 0)
-				return true;
-		}
-		else if (currTask.equals( "ghosts")){
-			if(ftab.length > 0)
-				return true;
-		}
-		else if (currTask.equals( "goblins")){
-			if(ltab.length > 0)
-				return true;
-		}
-		else if (currTask.equals( "icefiends")){
-			if(ftab.length > 0)
-				return true;
-		}
-		else if( currTask.equals( "kalphite")){
-			//println("chceking if I have all the stuff for kalphite");
-			if (inArea(desertArea[0], desertArea[1], pos())){
-				if(ROPE.length > 0 && waterskin.length > 0)
+			else if (currTask.equals( "dwarves")){ 
+			if(useTabs){
+				if(vtab.length > 0)
 					return true;
 			}
-			else if (inArea(alkharidArea[0], alkharidArea[1], pos())){
-				if(ROPE.length > 0 && waterskin.length > 0 && shanty.length > 0)
-					return true;
-			}
-			else if (inArea(kalphiteTunnel[0], kalphiteTunnel[1], pos()))
-				return true;
 			else{
-				if(ROPE.length > 0 && waterskin.length > 0 && shanty.length > 0 && ROD.length > 0)
+				if (!haveRune(1) || !haveRune(2) || !haveRune(3)){
+					println("Dont have  varrock runes");
+					return false;
+					
+				}
+				else
 					return true;
+			}
+		}
+			else if (currTask.equals( "ghosts")){
+				if(useTabs || useTabF){
+					if(ftab.length > 0)
+						return true;
+				}
+				else{
+					if (!haveRune(1) || !haveRune(2) || !haveRune(4))
+						return false;
+					else
+						return true;
+				}
+		}
+			else if (currTask.equals( "goblins")){
+				if(useTabs || useTabL){
+					if(ltab.length > 0)
+						return true;
+				}
+				else{
+					if (!haveRune(1) || !haveRune(0) || !haveRune(2))
+						return false;
+					else
+						return true;
+				}
+		}
+			else if (currTask.equals( "icefiends")){
+				if(useTabs || useTabF){
+					if(ftab.length > 0)
+						return true;
+				}
+				else{
+					if (!haveRune(1) || !haveRune(2) || !haveRune(4))
+						return false;
+					else
+						return true;
+				}
+		}
+			else if( currTask.equals( "kalphite")){
+			//println("chceking if I have all the stuff for kalphite");
+				if (inArea(desertArea[0], desertArea[1], pos())){
+					if(ROPE.length > 0 && waterskin.length > 0)
+						return true;
+			}
+				else if (inArea(alkharidArea[0], alkharidArea[1], pos())){
+					if(ROPE.length > 0 && waterskin.length > 0 && shanty.length > 0)
+						return true;
+			}
+				else if (inArea(kalphiteTunnel[0], kalphiteTunnel[1], pos()))
+					return true;
+				else{
+					if(ROPE.length > 0 && waterskin.length > 0 && shanty.length > 0 && ROD.length > 0)
+						return true;
 			}
 		} 
-		else if (currTask.equals("minotaurs")) {
-				if (vtab.length > 0)
+			else if (currTask.equals("minotaurs")) {
+			if(useTabs){
+				if(vtab.length > 0)
 					return true;
-			} 
-		else if (currTask.equals("monkeys")) {
-			if (ftab.length > 0 && coins.length > 0)
+			}
+			else{
+				if (!haveRune(1) || !haveRune(2) || !haveRune(3)){
+					println("Dont have  varrock runes");
+					return false;
+					
+				}
+				else
 					return true;
+			}
 			} 
-		else if (currTask.equals("rats")) {
-				if (vtab.length > 0)
-					return true;
+			else if (currTask.equals("monkeys")) {
+				if (coins.length == 0)
+					return false;
+				if(useTabs || useTabF){
+					if(ftab.length > 0)
+						return true;
+				}
+				else{
+					if (!haveRune(1) || !haveRune(2) || !haveRune(4))
+						return false;
+					else
+						return true;
+				}				
 			} 
-		else if (currTask.equals("scorpions")) {
+			else if (currTask.equals("rats")) {
+				if(useTabs){
+					if(vtab.length > 0)
+						return true;
+				}
+				else{
+					if (!haveRune(1)|| !haveRune(2) || !haveRune(3)){
+						println("Dont have  varrock runes");
+						return false;
+					}
+					else
+						return true;
+				}
+			} 
+			else if (currTask.equals("scorpions")) {
 				if (ROD.length > 0)
 					return true;
 			} 
-		else if (currTask.equals("skeletons")) {
-				if (vtab.length > 0)
-					return true;
+			else if (currTask.equals("skeletons")) {
+				if(useTabs){
+					if(vtab.length > 0)
+						return true;
+				}
+				else{
+					if (!haveRune(1) || !haveRune(2) || !haveRune(3)){
+						println("Dont have  varrock runes");
+						return false;
+					}
+					else
+						return true;
+				}
 			} 
-		else if (currTask.equals("spiders")) {
-				if (ltab.length > 0)
-					return true;
+			else if (currTask.equals("spiders")) {
+				if(useTabs || useTabL){
+					if(ltab.length > 0)
+						return true;
+				}
+				else{
+					if (!haveRune(1) || !haveRune(0) || !haveRune(2))
+						return false;
+					else
+						return true;
+				}
 			} 
-		else if (currTask.equals("werewolves")) {
+			else if (currTask.equals("werewolves")) {
 				if (ecto.length > 0)
 					return true;
 			} 
-		else if (currTask.equals("wolves")) {
-				if (ctab.length > 0)
-					return true;
+			else if (currTask.equals("wolves")) {
+				if(useTabs || useTabC){
+					if(ctab.length > 0)
+						return true;
+				}
+				else{
+					if (!haveRune(1) || !haveRune(2))
+						return false;
+					else
+						return true;
+				}
 			} 
-		else if (currTask.equals("desert_lizards")) {
+			else if (currTask.equals("desert_lizards")) {
 			if (inArea(desertArea[0], desertArea[1], pos())) {
 					if (waterskin.length > 0 && cooler.length > 0)
 						return true;
@@ -1443,13 +1892,29 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 					return true;
 			}
 		} 
-		else if (currTask.equals("zombies")) {
-				if (vtab.length > 0)
-					return true;
+			else if (currTask.equals("zombies")) {
+				if(useTabs){
+					if(vtab.length > 0)
+						return true;
+				}
+				else{
+					if (!haveRune(1) || !haveRune(2) || !haveRune(3)){
+						println("Dont have  varrock runes");
+						return false;
+					}
+					else
+						return true;
+				}
 			}
-		return false;
+			return false;
 		}
-		/***** option 1 *****/
+		/***** option 1 **** 
+		 * I am at my task already
+		 * 
+		 * 
+		 * 
+		 * 
+		 * */
 		else{ 
 			if (games.length == 0){
 				println("Dont have either a games necklace");
@@ -1463,26 +1928,35 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 				println("Dont have slayer gem");
 				return false;
 			}
-			else if (vtab.length == 0){
-				println("Dont have  varrock tabs");
-				return false;
+			else if (useTabs){
+				if (vtab.length == 0){
+					println("Dont have  varrock tabs");
+					return false;
+				}
 			}
-			
+			else if (!useTabs){
+				if (!haveRune(1) || !haveRune(2) || !haveRune(3)){
+					println("Dont have  varrock runes");
+					return false;
+				}
+			}
 			//games.length == 0 || food.length == 0 || gem.length == 0 || vtab.length > 0){
-			else if (currTask.equals( "banshees")){
+			if (currTask.equals( "banshees")){
 				if(ecto.length > 0 && (checkForHelm(1) || earmuffs.length > 0))
 					return true;
+				println("Dont have ecto or earmuffs");
 			}
 			else if (currTask.equals( "bats")){
-				if(ftab.length > 0)
+				//if(ftab.length > 0)
 					return true;
 			}
 			else if (currTask.equals( "bears")){
-				if(atab.length > 0)
-					return true;
+				//if(atab.length > 0)
+				return true;
+					
 			}
 			else if (currTask.equals( "birds")){ // no idea atm
-				if(atab.length > 0)
+				//if(atab.length > 0)
 					return true;
 			}
 			else if (currTask.equals( "cave_bugs")){
@@ -1498,7 +1972,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 					return true;
 			}
 			else if (currTask.equals( "cows")){
-				if(ftab.length > 0)
+				//if(ftab.length > 0)
 					return true;
 			}
 			else if (currTask.equals( "crawling_hands")){
@@ -1506,49 +1980,49 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 					return true;
 			}
 			else if (currTask.equals( "dogs")){
-				if(atab.length > 0)
+				//if(atab.length > 0)
 					return true;
 			}
 			else if (currTask.equals( "dwarves")){ 
-				if(vtab.length > 0)
+				//if(vtab.length > 0)
 					return true;
 			}
 			else if (currTask.equals( "ghosts")){
-				if(ftab.length > 0)
+				//if(ftab.length > 0)
 					return true;
 			}
 			else if (currTask.equals( "goblins")){
-				if(ltab.length > 0)
+				//if(ltab.length > 0)
 					return true;
 			}
 			else if (currTask.equals( "icefiends")){
-				if(ftab.length > 0)
+				//if(ftab.length > 0)
 					return true;
 			}
 			else if( currTask.equals( "kalphite")){
 				return true;
 			}
 			else if (currTask.equals( "minotaurs")){ 
-				if(vtab.length > 0)
+				//if(vtab.length > 0)
 					return true;
 			}
 			else if (currTask.equals( "monkeys")){ 
-				if(ftab.length > 0)
+				//if(ftab.length > 0)
 					return true;
 			}
 			else if (currTask.equals( "rats")){
-				if(vtab.length > 0)
+				//if(vtab.length > 0)
 					return true;
 			}
 			else if (currTask.equals( "scorpions")){ 
 				return true;
 			}
 			else if (currTask.equals( "skeletons")){
-				if(vtab.length > 0)
+				//if(vtab.length > 0)
 					return true;
 			}
 			else if (currTask.equals( "spiders")){
-				if(ltab.length > 0)
+				//if(ltab.length > 0)
 					return true;
 			}
 			else if (currTask.equals( "werewolves")){
@@ -1556,7 +2030,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 					return true;
 			}
 			else if (currTask.equals( "wolves")){ 
-				if(ctab.length > 0)
+				//if(ctab.length > 0)
 					return true;
 			}
 			else if (currTask.equals( "desert_lizards")){
@@ -1564,7 +2038,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 					return true;
 			}
 			else if (currTask.equals( "zombies")){ 
-				if(vtab.length > 0)
+				//if(vtab.length > 0)
 					return true;
 			}
 			return false;
@@ -1753,7 +2227,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 			new RSTile(2884, 9834, 0), new RSTile(2884, 9840, 0), new RSTile(2888, 9846, 0), 
 			new RSTile(2894, 9848, 0), new RSTile(2898, 9849, 0), new RSTile(2904, 9849, 0), 
 			new RSTile(2911, 9849, 0), new RSTile(2914, 9841, 0), new RSTile(2914, 9835, 0), 
-			new RSTile(2915, 9833, 0) };
+			new RSTile(2915, 9833, 0), new RSTile(2914, 9828) };
 	RSTile batMiddle = new RSTile(2915, 9833, 0);
 	RSTile[] toTavernlyDungPath = { new RSTile(2928, 3357, 0), new RSTile(2925, 3363, 0), new RSTile(2921, 3370, 0), 
 			new RSTile(2914, 3373, 0), new RSTile(2907, 3377, 0), new RSTile(2901, 3381, 0), 
@@ -1773,8 +2247,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 	RSTile[] ardyArea = {new RSTile(2602, 3340), new RSTile(2690, 3265, 0) };
 	
 	
-	
-	
+	RSTile[] toWolfArea = { new RSTile(2735, 3495, 0), new RSTile(2866, 3428, 0)};
 	RSTile wolfMiddle = new RSTile(2847, 3481, 0);
 	RSTile[] wolfArea = { new RSTile(2837, 3491, 0), new RSTile(2850, 3468, 0)};
 	
@@ -1782,7 +2255,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 	RSTile[] burthorpeArea = {new RSTile(2893, 3566, 0), new RSTile(2937, 3530, 0)};
 	RSTile turaelT = new RSTile(2931, 3536, 0);
 	RSTile[] varrockArea = {new RSTile(3176, 3448, 0), new RSTile(3255, 3386, 0) };
-	RSTile[] toStrongholdArea = {new RSTile(3074, 3429, 0), new RSTile(3180, 3408, 0) };
+	RSTile[] toStrongholdArea = {new RSTile(3074, 3440, 0), new RSTile(3180, 3408, 0) };
 	RSTile strongHoldHole = new RSTile(3081, 3420, 0);
 	RSTile teleCenterT = new RSTile(1863, 5238, 0);
 	RSTile[] afterPortal = {new RSTile(1905, 5229, 0), new RSTile(1916, 5210, 0) };
@@ -1806,7 +2279,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 	RSTile iceFiendsMiddle = new RSTile(3004, 3474, 0);
 	RSTile[] toIceFieldsArea = {iceFiendsMiddle, toStrongholdArea[1] };
 	RSTile[] beforeToIceFiendsArea = {new RSTile(3002, 3488, 0), new RSTile(3033, 3462, 0) };
-	
+	RSTile[] beforeDwarfArea = {new RSTile(3000, 3485, 0), new RSTile(3080, 3419, 0) };
 	
 	RSTile[] edgeTrapDoorArea = {new RSTile(3050, 3486, 0), varrockArea[0] };
 	RSTile edgeTrapdoorTile = new RSTile(3097, 3468, 0);
@@ -1845,7 +2318,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 	
 	RSTile[] bearArea = {new RSTile(2602, 3350, 0), new RSTile(2730, 3265, 0) };
 	
-	//TODO
+	//TODO GOTO_TASK
 	public boolean GOTO_TASK(){
 		state="Going to task";
 		Mouse.setSpeed(General.random(140, 160));
@@ -1857,8 +2330,10 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 				return true;
 			}
 			else if (inArea(awkwardBansheeSq[0], awkwardBansheeSq[1], pos())){
+				Keyboard.pressKey((char) KeyEvent.VK_CONTROL);
 				Walking.walkPath(awkwardBansheeSqPath);
 				waitIsMovin();
+				Keyboard.releaseKey((char) KeyEvent.VK_CONTROL);
 			}
 			else if (inArea(slayerTowerDoorArea[0], slayerTowerDoorArea[1], pos())){
 				
@@ -1901,7 +2376,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 				
 			}
 			else
-				useTeleport(5, 0);
+				useTeleport(5);
 			
 		}
 		
@@ -1953,7 +2428,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 				waitIsMovin();
 			}
 			else
-				useTeleport(1,0);
+				useTeleport(1);
 		}
 		
 		else if (currTask.equals( "bears")){
@@ -1968,7 +2443,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 				waitIsMovin();
 			}
 			else
-				useTeleport(4, 0);
+				useTeleport(4);
 		}
 		
 		else if (currTask.equals( "birds")){ // no idea atm
@@ -1998,7 +2473,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 				waitIsMovin();
 			}
 			else
-				useTeleport(4, 0);
+				useTeleport(4);
 			
 		}
 		
@@ -2029,7 +2504,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 				waitIsMovin();
 			}
 			else 
-				useTeleport(2, 0);
+				useTeleport(2);
 		}
 		
 		else if (currTask.equals( "cave_bugs")){
@@ -2069,7 +2544,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 			else if(inArea(caveBugArea[0], caveBugArea[1], pos()))
 				return true;
 			else
-				useTeleport(3, 0);
+				useTeleport(3);
 		}
 		
 		else if (currTask.equals( "cave_slimes")){
@@ -2109,7 +2584,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 			else if(inArea(caveSlimeArea[0], caveSlimeArea[1], pos()) || inArea(caveSlimeArea2[0], caveSlimeArea2[1], pos()))
 				return true;
 			else
-				useTeleport(3, 0);
+				useTeleport(3);
 		}
 		
 		else if (currTask.equals( "cows")){
@@ -2140,7 +2615,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 			else if (pos().distanceTo(cowsMiddle)<=15)
 				return true;
 			else
-				useTeleport(1, 0);
+				useTeleport(1);
 		}
 		
 		else if (currTask.equals( "crawling_hands")){
@@ -2185,7 +2660,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 				
 			}
 			else
-				useTeleport(5, 0);
+				useTeleport(5);
 		}
 		
 		else if (currTask.equals( "dogs")){
@@ -2220,11 +2695,17 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 			else if (inArea(dogArea1[0], dogArea1[1], pos()) || inArea(dogArea2[0], dogArea2[1], pos()))
 				return true;
 			else
-				useTeleport(4, 0);
+				useTeleport(4);
 		}
 		
 		else if (currTask.equals( "dwarves")){ 
-			if (inArea(dwarfArea[0], dwarfArea[1], pos())){
+			if(pos().distanceTo(dwarfMiddle)<=15)
+				return true;
+			else if (inArea(dwarfArea[0], dwarfArea[1], pos())){
+				WebWalking.walkTo(dwarfMiddle);
+				waitIsMovin();
+			}
+			else if (inArea(beforeDwarfArea[0], beforeDwarfArea[1], pos())){
 				WebWalking.walkTo(dwarfMiddle);
 				waitIsMovin();
 			}
@@ -2233,13 +2714,11 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 				waitIsMovin();
 			}
 			else if (inArea(toStrongholdArea[0], toStrongholdArea[1], pos())){
-				WebWalking.walkTo(dwarfMiddle);
+				WebWalking.walkTo(beforeIceFiends);
 				waitIsMovin();
 			}
-			if(pos().distanceTo(dwarfMiddle)<=15)
-				return true;
 			else 
-				useTeleport(1, 0);
+				useTeleport(0);
 			
 		}
 		
@@ -2292,14 +2771,14 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 				waitIsMovin();
 			}
 			else
-				useTeleport(1,0);
+				useTeleport(1);
 		}
 		
 		else if (currTask.equals( "goblins")){
 			if(inArea(goblinArea[0], goblinArea[1], pos()))
 				return true;
 			else if(pos().distanceTo(lumbyTeleT) > 15)
-				useTeleport(3, 0);
+				useTeleport(3);
 			else {
 				WebWalking.walkTo(goblinMiddle);
 				waitIsMovin();
@@ -2327,7 +2806,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 				waitIsMovin();
 			}
 			else
-				useTeleport(0, 0);
+				useTeleport(0);
 			
 		}
 		
@@ -2405,8 +2884,15 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 				waitIsMovin();
 			}
 			else if (inArea(kalphiteTunnel[0], kalphiteTunnel[1], pos())){
+				if(pos().getY() > 9523){
+					
+					Walking.walkPath(Walking.generateStraightPath(new RSTile(2505, 9525, 2)));
+					waitIsMovin();
+				}
+				else{
 				Walking.walkPath(toKalphitePart2);
 				waitIsMovin();
+				}
 			}
 			else if (inArea(alkharidArea[0], alkharidArea[1], pos())){
 				WebWalking.walkTo(shantyPassT);
@@ -2471,7 +2957,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 			else if (pos().distanceTo(minotaurT) <=15)
 				return true;
 			else
-				useTeleport(0, 0);
+				useTeleport(0);
 		}
 		
 		else if (currTask.equals( "monkeys")){ 
@@ -2528,7 +3014,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 				waitIsMovin();
 			}
 			else
-				useTeleport(1, 0);
+				useTeleport(1);
 		}
 		
 		else if (currTask.equals( "rats")){
@@ -2560,7 +3046,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 			else if (pos().distanceTo(ratsMiddle) <=15)
 				return true;
 			else
-				useTeleport(0,0);
+				useTeleport(0);
 		}
 		
 		else if (currTask.equals( "scorpions")){ 
@@ -2690,7 +3176,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 			else if (inArea(skeletonArea[0], skeletonArea[1], pos()))
 				return true;
 			else
-				useTeleport(0, 0);
+				useTeleport(0);
 		}
 		
 		else if (currTask.equals( "spiders")){
@@ -2701,7 +3187,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 				waitIsMovin();
 			}
 			else 
-				useTeleport(3, 0);
+				useTeleport(3);
 		}
 		
 		else if (currTask.equals( "werewolves")){
@@ -2719,19 +3205,19 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 				waitIsMovin();
 			}				
 			else
-				useTeleport(5, 0);
+				useTeleport(5);
 			
 		}
 		
 		else if (currTask.equals( "wolves")){ 
 			if(pos().distanceTo(wolfMiddle)<=15)
 				return true;
-			else if(pos().distanceTo(camelotTeleSpot) > 15)
-				useTeleport(2, 0);
-			else{
+			else if (inArea(toWolfArea[0], toWolfArea[1], pos())){
 				WebWalking.walkTo(wolfMiddle);
 				waitIsMovin();
 			}
+			else
+				useTeleport(2);
 		}
 		
 		else if (currTask.equals( "desert_lizards")){
@@ -2887,12 +3373,12 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 			else if (inArea(zombieArea[0], zombieArea[1], pos()))
 				return true;
 			else
-				useTeleport(0, 0);
+				useTeleport(0);
 		}
 		
 		return false;
 	}
-	//TODO
+	//TODO isAtTask
 	public boolean isAtTask(){
 		state = "Check for task area";
 		if (currTask.equals( "banshees")){
@@ -3025,125 +3511,130 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 		
 		return false;
 	}
-	//TODO
-	public boolean useTeleport(int option, int tabOrRune){
+
+	
+	
+	//TODO useTeleport
+	public boolean useTeleport(int option){
 		state = "Teleporting...";
 		RSItem[] vtab = Inventory.find(VTAB);
 		RSItem[] ftab = Inventory.find(FTAB);
 		RSItem[] ctab = Inventory.find(CTAB);
 		RSItem[] ltab = Inventory.find(LTAB);
 		RSItem[] atab = Inventory.find(ATAB);
-		RSItem[] law = Inventory.find(LAW);
-		RSItem[] earth = Inventory.find(EARTH);
-		RSItem[] air = Inventory.find(AIR);
-		RSItem[] water = Inventory.find(WATER);
-		RSItem[] fire = Inventory.find(FIRE);
 		RSItem[] ecto = Inventory.find(ECTO);
 		RSItem[] ROD = Inventory.find(rod);
 		RSItem[] games = Inventory.find(gamesNecklace);
-
+		
+		int tabOrRune = 1; 
+		
 		switch (option) {
 		case 0:
+			if (useTabV) tabOrRune = 0;
 			if (tabOrRune == 0) {
 				if (vtab.length > 0) {
 					if (vtab[0].click("Break")) {
-						sleep(5000, 6000);
+						sleep(3000, 4000);
 						return true;
 					}
 				}
 			} 
 			else {
-				if (law.length > 0 && air.length > 2 && fire.length > 0) {
-					GameTab.open(org.tribot.api2007.GameTab.TABS.INVENTORY);
+				if (haveRune(1) && haveRune(2) && haveRune(3)) {
+					GameTab.open(org.tribot.api2007.GameTab.TABS.MAGIC);
 					sleep(200, 300);
 
 					RSInterface vtele = Interfaces.get(192, 15);
 					if (vtele.click("Cast Varrock Teleport"))
-						sleep(4000, 4500);
+						sleep(3000, 3500);
 					return true;
 				}
 			}
 			break;
 		case 1:
+			if (useTabF) tabOrRune = 0;
 			if (tabOrRune == 0) {
 				if (ftab.length > 0) {
 					if (ftab[0].click("Break")) {
-						sleep(5000, 6000);
+						sleep(3000, 4000);
 						return true;
 					}
 				}
 			} 
 			else {
-				if (law.length > 0 && air.length > 2 && water.length > 0) {
-					GameTab.open(org.tribot.api2007.GameTab.TABS.INVENTORY);
+				if (haveRune(1) && haveRune(2) && haveRune(4)) {
+					GameTab.open(org.tribot.api2007.GameTab.TABS.MAGIC);
 					sleep(200, 300);
 
-					RSInterface vtele = Interfaces.get(192, 21);
-					if (vtele.click("Cast Falador Teleport"))
-						sleep(4000, 4500);
+					RSInterface ftele = Interfaces.get(192, 21);
+					if (ftele.click("Cast Falador Teleport"))
+						sleep(3000, 3500);
 					return true;
 				}
 			}
 			break;
 		case 2:
+			if (useTabC) tabOrRune = 0;
 			if (tabOrRune == 0) {
 				if (ctab.length > 0) {
 					if (ctab[0].click("Break")) {
-						sleep(5000, 6000);
+						sleep(3000, 4000);
 						return true;
 					}
 				}
 			} 
 			else {
-				if (law.length > 0 && air.length > 4) {
-					GameTab.open(org.tribot.api2007.GameTab.TABS.INVENTORY);
+				if (haveRune(1) && haveRune(2)) {
+					GameTab.open(org.tribot.api2007.GameTab.TABS.MAGIC);
 					sleep(200, 300);
 
-					RSInterface vtele = Interfaces.get(192, 26);
-					if (vtele.click("Cast Camelot Teleport"))
-						sleep(4000, 4500);
+					RSInterface ctele = Interfaces.get(192, 26);
+					if (ctele.click("Cast Camelot Teleport"))
+						sleep(3000, 3500);
 					return true;
 				}
 			}
 			break;
 		case 3:
+			if (useTabL) tabOrRune = 0;
 			if (tabOrRune == 0) {
 				if (ltab.length > 0) {
 					if (ltab[0].click("Break")) {
-						sleep(5000, 6000);
+						sleep(3000, 4000);
 						return true;
 					}
 				}
 			} 
 			else {
-				if (law.length > 0 && air.length > 2 && earth.length > 0) {
-					GameTab.open(org.tribot.api2007.GameTab.TABS.INVENTORY);
+				if (haveRune(1) && haveRune(2) && haveRune(0)) {
+					GameTab.open(org.tribot.api2007.GameTab.TABS.MAGIC);
 					sleep(200, 300);
 
-					RSInterface vtele = Interfaces.get(192, 18);
-					if (vtele.click("Cast Lumbridge Teleport"))
-						sleep(4000, 4500);
+					RSInterface ltele = Interfaces.get(192, 18);
+					if (ltele.click("Cast Lumbridge Teleport"))
+						sleep(3000, 3500);
 					return true;
 				}
 			}
 			break;
 		case 4:
+			if (useTabA) tabOrRune = 0;
 			if (tabOrRune == 0) {
 				if (atab.length > 0) {
 					if (atab[0].click("Break")) {
-						sleep(5000, 6000);
+						sleep(3000, 4000);
 						return true;
 					}
 				}
 			} 
 			else {
-				if (law.length > 1 && water.length > 1) {
-					GameTab.open(org.tribot.api2007.GameTab.TABS.INVENTORY);
+				if (haveRune(1) && haveRune(4)) {
+					GameTab.open(org.tribot.api2007.GameTab.TABS.MAGIC);
 					sleep(200, 300);
 
-					RSInterface vtele = Interfaces.get(192, 32);
-					if (vtele.click("Cast Ardougne Teleport"))
-						sleep(4000, 4500);
+					RSInterface atele = Interfaces.get(192, 32);
+					if (atele.click("Cast Ardougne Teleport"))
+						sleep(3000, 3500);
 					return true;
 				}
 			}
@@ -3173,7 +3664,137 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 		return false;
 	}
 	
-	
+	//TODO checkLootInArea
+	public boolean checkLootInArea(RSGroundItem loot){
+		RSTile loots = loot.getPosition();
+		
+		if (currTask.equals("banshees")) {
+			if (!inArea(awkwardBansheeSq[0], awkwardBansheeSq[1], loots)
+					&& inArea(bansheeArea[0], bansheeArea[1], loots))
+				return true;
+		}
+
+		else if (currTask.equals("bats")) {
+			if (loots.distanceTo(batMiddle) <= 15)
+				return true;
+		}
+
+		else if (currTask.equals("bears")) {
+			if (loots.distanceTo(bearsMiddle) <= 20)
+				return true;
+
+		}
+
+		else if (currTask.equals("birds")) {
+			if (loots.distanceTo(birdMiddle) <= 10)
+				return true;
+		}
+
+		else if (currTask.equals("cave_bugs")) {
+			if (inArea(caveBugArea[0], caveBugArea[1], loots))
+				return true;
+		} else if (currTask.equals("cave_crawlers")) {
+			if (inArea(caveCrawlerArea[0], caveCrawlerArea[1], loots))
+				return true;
+		}
+
+		else if (currTask.equals("cave_slime")) {
+			if (inArea(caveSlimeArea[0], caveSlimeArea[1], loots)
+					|| inArea(caveSlimeArea2[0], caveSlimeArea2[1], loots)) {
+				return true;
+			}
+		} else if (currTask.equals("cows")) {
+			if (loots.distanceTo(cowsMiddle) <= 15)
+				return true;
+		}
+
+		else if (currTask.equals("crawling_hands")) {
+			if (loots.distanceTo(crawlingHandsT) <= 15)
+				return true;
+		}
+
+		else if (currTask.equals("dogs")) {
+			if (inArea(dogArea1[0], dogArea1[1], loots)
+					|| inArea(dogArea2[0], dogArea2[1], loots))
+				return true;
+		}
+
+		else if (currTask.equals("dwarves")) {
+			if (!inArea(trickyDwarf[0], trickyDwarf[1], loots)
+					&& inArea(dwarfAttackArea[0], dwarfAttackArea[1], loots))
+				return true;
+		}
+
+		else if (currTask.equals("ghosts")) {
+			if (loots.distanceTo(ghostMiddle) <= 20)
+				return true;
+		}
+
+		else if (currTask.equals("goblins")) {
+			if (inArea(goblinArea[0], goblinArea[1], loots)
+					&& !inArea(goblinHut[0], goblinHut[1], loots))
+				return true;
+		}
+
+		else if (currTask.equals("icefiends")) {
+			if (loots.distanceTo(iceFiendsMiddle) <= 15)
+				return true;
+		}
+
+		else if (currTask.equals("kalphite")) {
+			if (loots.distanceTo(kalphiteMiddle) <= 15)
+				return true;
+		}
+
+		else if (currTask.equals("minotaurs")) {
+			if (inArea(minotaurArea[0], minotaurArea[1], loots))
+				return true;
+		}
+
+		else if (currTask.equals("monkeys")) {
+
+			if (loots.distanceTo(monkeyT) <= 15)
+				return true;
+		}
+
+		else if (currTask.equals("rats")) {
+			if (loots.distanceTo(ratsMiddle) <= 15)
+				return true;
+		}
+
+		else if (currTask.equals("scorpions")) {
+			if (loots.distanceTo(scorpionMiddle) <= 15)
+				return true;
+		} 
+		else if (currTask.equals("skeletons")) {
+			if (inArea(skeletonArea[0], skeletonArea[1], loots))
+				return true;
+		} 
+		else if (currTask.equals("spiders")) {
+			if (loots.distanceTo(spidersMiddle) <= 15)
+				return true;
+		}
+
+		else if (currTask.equals("werewolves")) {
+			if (inArea(canafisArea[0], canafisArea[1], loots))
+				return true;
+		} 
+		else if (currTask.equals("wolves")) {
+			if (inArea(wolfArea[0], wolfArea[1], loots))
+				return true;
+		} 
+		else if (currTask.equals("desert_lizards")) {
+			if (loots.distanceTo(toDesertLizards[toDesertLizards.length - 1]) <= 25)
+				return true;
+		}
+
+		else if (currTask.equals("zombies")) {
+			if (inArea(zombieArea[0], zombieArea[1], loots))
+				return true;
+		}
+
+		return false;
+	}
 	
 	@Override
 	public void clanMessageRecieved(String arg0, String arg1) {
@@ -3186,7 +3807,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 		
 
 	}
-	// TODO Auto-generated method stub
+	// TODO serverMessaging
 	@Override
 	public void serverMessageRecieved(String message) {
 		int currLeftToKill;
@@ -3219,7 +3840,6 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 		else if (message.equals("You've completed your task; return to a Slayer master.")){
 			currTask = "None";
 			numLeftToKill = 0;
-			
 		}
 		else if (message.equals("You need something new to hunt.")){
 			currTask = "None";
@@ -3230,7 +3850,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 			sleep(1000,1200);
 		}
 	}
-	//TODO
+	//TODO waitTillDead
 	public void waitTillDead(RSNPC npc){
 		boolean hi = false;
 		for (int i = 0; i < 800; i++, sleep(30, 40)) {
@@ -3496,18 +4116,9 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 		int k = 0;
 
 		while (k < 200	&& Player.isMoving()) {
-			/**
-			 * While the amount of the item to be looted stays the same, the
-			 * scipt sleeps 50 seconds, we check if we are moving in case the
-			 * bot clicks the wrong item that way if you loot a different item
-			 * and stop moving, you will break the loop the k integer is used to
-			 * break the loop after 10 seconds if none of the other conditions
-			 * break the loop.
-			 */
 			sleep(80);
 			k++;
 		}
-
 	}
 
 	public boolean clickModel(RSModel model, String option, boolean rightClick)
@@ -3540,119 +4151,207 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 		}
 		return false;
 	}
-	
-	public int BANK_SECTION = 0;
+	int BANK_SECTION = 0;
+	boolean WITHDRAWAL_FAIL_SAFE = true;
 
-	/**
-	 * Withdraws any items from bank if found
-	 * 
-	 * @param count
-	 *            (The amount to withdraw)
-	 * @param ids
-	 *            (The id as a single integer or an array of integers)
-	 * 
-	 *            By: Platinum Force Scripts
-	 * 
-	 **/
-	public void withdraw(int count, int... ids) {
-
-		//if (BANK_SECTION == 0) Mouse.clickBox(472, 79, 479, 87, 1);
+	/** Withdraws any items from bank if found
+	* 
+	* @param a (The amount to withdraw)
+	* @param b (The id as a single integer or an array of integers)
+	* 
+	* By: Platinum Force Scripts
+	* 
+	**/
+	public void withdraw(int count, int... ids){
 		
-		int section, scrollTo, itemX, itemY;
-
-		for (int i = 0; i < ids.length; i++) {
-			RSItem[] items = Banking.find(ids[i]);
-
-			// If the item was not found, skip to next item
-			if (items.length == 0)
-				continue;
-
-			// "section" is the section of the bank (each section has 6 rows
-			// starting from the top)
-			// The math is: (item's position in bank) divided by (8 items per
-			// row) divided by (6 rows per section)
-			// This determines which section of the bank to scroll to to find
-			// the item
-			section = (int) Math.floor((items[0].getIndex()) / 8.0 / 6.0);
-
-			// "scrollTo" is the pixel (y offset) to scroll to, or to click (On
-			// the banks scroll bar)
-			scrollTo = (int) Math.round((section * 23.5) + 86);
-
-			// "itemX" is the actual x position of the item after scrolling to
-			// it's section in the bank
-			itemX = (int) Math.ceil((items[0].getIndex()) % 8);
-
-			// "itemY" is the actual y position of the item after scrolling to
-			// it's section in the bank
-			itemY = (int) (Math.floor(items[0].getIndex() / 8) % 6);
-
-			// This determines if an item is located in the section of the bank
-			// that you already scrolled to.
-			// If so, there is no reason to scroll the the same spot again,
-			// you're already there!
-			// Whenever you close your bank reset "BANK_SECTION" to zero!
+		int[] countBefore = new int[ids.length];
+		int[] stackBefore = new int[ids.length];
+		
+		for(int i=0; i<ids.length; i++){
+			countBefore[i] = Inventory.getCount(ids[i]);
+			stackBefore[i] = 0;
+			RSItem[] item = Inventory.find(ids[i]);
+			if(item.length > 0)
+				stackBefore[i] = item[0].getStack();
+		}
+		
+		int section,scrollTo,itemX,itemY;
+		int currentItem = 0;
+		int currentItemCount = 0;
+		
+		for(int i=0; i<ids.length; i++){
 			
-			//if (section != BANK_SECTION) {
+			RSItem[] items = Banking.find(ids[i]);
+			
+			//If the item was not found, skip to next item
+			if(items.length == 0) continue;
+			
+			if(ids[i] != currentItem){
+				currentItem = ids[i];
+				currentItemCount = 1;
+			}
+			else currentItemCount++;
+			
+			//If you have tried to withdraw the current item 4 times, continue to the next item 
+			if(currentItemCount == 4)
+				continue;
+			
+			//"section" is the section of the bank (each section has 6 rows starting from the top)
+			//The math is: (item's position in bank) divided by (8 items per row) divided by (6 rows per section)
+			//This determines which section of the bank to scroll to to find the item
+			section = (int)Math.floor((items[0].getIndex())/8.0/6.0);
+			
+			//"itemX" is the actual x position of the item after scrolling to it's section in the bank
+			itemX = (int)Math.ceil((items[0].getIndex())%8);
+			
+			//"itemY" is the actual y position of the item after scrolling to it's section in the bank
+			itemY = (int)(Math.floor(items[0].getIndex()/8)%6);
+			
+			if(section > 7){
+				section = 8;
+				scrollTo = 260;
+				itemY = 4+(int)(Math.ceil(items[0].getIndex()/8)-48);
+			}
+			else {
+				//"scrollTo" is the pixel (y offset) to scroll to, or to click (On the banks scroll bar)
+				scrollTo = (int)Math.round((section * 23.5) + 86);
+			}
+			
+			//This determines if an item is located in the section of the bank that you already scrolled to.
+			//If so, there is no reason to scroll the the same spot again, you're already there!
+			//Whenever you close your bank reset "BANK_SECTION" to zero!
+			if(section != BANK_SECTION){
 				Mouse.moveBox(469, scrollTo, 481, scrollTo);
 				Mouse.click(Mouse.getPos(), 1);
 				BANK_SECTION = section;
 				sleep(150);
-			//}
-
-			// Moves the mouse over the item in the bank
-			Mouse.move(80 + (itemX * 47) + General.random(7, 22), 59
-					+ (itemY * 38) + General.random(13, 25));
-			sleep(400);
-
-			// "countBefore" is the current inventory count of the item before
-			// you withdraw
-			// it is necessary to check if you have succeeded in withdrawing
-			// more of that item
-			int countBefore = Inventory.getCount(ids[i]);
-
-			if (count == 1)
+			}
+			
+			//Withdraw 1
+			if(count == 1){
+				Mouse.move(80+(itemX*47)+General.random(11, 21), 59+(itemY*38)+General.random(15, 23));
 				Mouse.click(Mouse.getPos(), 1);
-			else {
-				Mouse.click(Mouse.getPos(), 3);
-				sleep(200);
-
-				if (count == 5 || count == 10)
-					ChooseOption.select("Withdraw " + count);
-				else if (count == 0)
-					ChooseOption.select("Withdraw All");
-				else {
-					ChooseOption.select("Withdraw X");
-
-					/**
-					 * Add a wait time below, or a detect if "Enter Amount:" is
-					 * visible in Interface(548, 93) Or detect if you can type
-					 * in Interface(548, 94), which contains the text "*" I just
-					 * added a wait time of 1.5 seconds and a check for null.
-					 * But Interface(548, 93) never seems to be null. Hmm...
-					 **/
-
-					while (Interfaces.get(548, 93) == null)
-						sleep(100);
-
-					sleep(1500);
-					Keyboard.typeString(count + "");
-					Keyboard.pressEnter();
+			}
+			//Widthdraw 5 or 10
+			else if(count == 5 || count == 10){
+				for(int k=0; k<4; k++){
+					Mouse.move(80+(itemX*47)+General.random(11, 21), 59+(itemY*38)+General.random(15, 23));
+					if(selectOption("Withdraw "+count))
+						break;
+				}
+			}
+			//Withdraw All
+			else if(count == 0){
+				for(int k=0; k<4; k++){
+					Mouse.move(80+(itemX*47)+General.random(11, 21), 59+(itemY*38)+General.random(15, 23));
+					if(selectOption("Withdraw All"))
+						break;
+				}
+			}
+			else { 
+				//Withdraw X
+				boolean withdrawn = false;
+				while(bankIsOpen() && !withdrawn){
+					for(int k=0; k<4; k++){
+						Mouse.move(80+(itemX*47)+General.random(11, 21), 59+(itemY*38)+General.random(15, 23));
+						if(selectOption("Withdraw X")){
+							int cnt=0;
+							while(!enterAmount()){
+								if(cnt >= 20) break;
+								sleep(100);
+								cnt++;
+							}
+							if(enterAmount()){
+								Keyboard.typeString(count+"");
+								Keyboard.pressEnter();
+								withdrawn = true;
+								break;
+							}
+						}
+					}
 				}
 			}
 			
 			sleep(300);
-			return;
-			// If the inventory amount before has not changed for this item, you
-			// have failed to withdraw it.
-			// It will try again. And if the item isn't found in the bank, it
-			// will skip it. So there are
-			// no infinite loops
 			
-			//if (Inventory.getCount(ids[i]) < countBefore)
-			//	i--;
+			//If the inventory amount before has not changed for this item, you have failed to withdraw it.
+			//It will try again. And if the item isn't found in the bank, it will skip it.
+			
+			boolean countChanged = false;
+			boolean stackChanged = false;
+			
+			//Check if inventory item amount has changed within 2 seconds
+			for(int j=0; j<20; j++){
+				
+				int stackAfter = 0;
+				RSItem[] item = Inventory.find(ids[i]);
+				if(item.length > 0)
+					stackAfter = item[0].getStack();
+				
+				//Check if the amount of items has changed for non-stackable items
+				if(Inventory.getCount(ids[i]) > countBefore[i]){
+					countChanged = true;
+					break;
+				}
+				//Check if stack size has changed for stackable items
+				else if(stackAfter > stackBefore[i]){
+					stackChanged = true;
+					break;
+				}
+				sleep(100);
+			}
+			if(!countChanged && !stackChanged)
+				i--;
+			else if(ids.length > 1)
+				return;
 		}
 		return;
+	}
+	
+	/** Make sure an option is valid **/
+	
+	private boolean selectOption(String option){
+		
+		Point pos = Mouse.getPos();
+		for(int i=0; i<1; i++){				
+			Mouse.click(pos, 3);
+			sleep(100);
+			if(ChooseOption.isOptionValid(option) && ChooseOption.select(option))
+				return true;
+			else Mouse.move((int)Mouse.getPos().getX()-General.random(10, 20), (int)Mouse.getPos().getY()-General.random(50,60));
+		}
+		return false;
+	}
+
+
+	/** Check color at image coordinate **/
+	
+	private boolean enterAmount(){
+
+		BufferedImage asterisk = Screen.getGameImage().getSubimage(259, 429, 1, 1);
+		int[] r = new int[] {0,6};
+		int[] g = new int[] {0,6};
+		int[] b = new int[] {122,134};
+		
+		Color rgb = new Color(asterisk.getRGB(0,0));
+		int red = rgb.getRed();
+		int green = rgb.getGreen();
+		int blue = rgb.getBlue();
+		
+		//Check for colors between these values
+		if(red >= r[0] && red <= r[1] && green >= g[0] && green <= g[1] && blue >= b[0] && blue <= b[1])
+			return true;
+		
+		return false;
+	}
+
+
+	/** Open bank **/
+	
+	private boolean bankIsOpen(){
+		
+		//A method to check if the bank is open
+		return Banking.isBankScreenOpen();
 	}
 	
 	public boolean distanceFromTile(RSTile tile, int distance){
@@ -3669,9 +4368,15 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 		return !mob.isOnScreen();
 	}
 	
+	
 	public void emergTele(){
 		RSItem[] vtab = Inventory.find(VTAB);
-		if(vtab.length > 0)
+		
+		if (!useTabs){
+			println("going to varrock using runes");
+			useTeleport(0);
+		}
+		else if(vtab.length > 0)
 			vtab[0].click("Break");
 		else{
 			stopScript();
@@ -3769,7 +4474,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 	    
 	    
 	    /**** brian methods ****/
-	    //TODO
+	    //TODO getClosesetInactiveNPC
 	    public RSNPC getClosestInactiveNPC(String id) {
 	    	RSNPC[] npcs = NPCs.findNearest(id);
 	    	if(currTask.equals("werewolves"))
@@ -3785,9 +4490,16 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 	    		    			return npcs[x];
 	    				}
 	    			}
+	    			else if (currTask.equals("bats")){
+	    				if(npcs[x].getPosition().distanceTo(batMiddle) <= 15){
+	    					
+	    					if(!npcs[x].isInCombat() && PathFinding.isTileWalkable(npcs[x].getAnimablePosition()))
+	    		    			return npcs[x];
+	    				}
+	    			}
 	    			else if(currTask.equals("wolves")){
 	    				if(inArea(wolfArea[0], wolfArea[1], npcs[x].getPosition())){
-	    					println("wolf is in area");
+	    					
 	    					if(!npcs[x].isInCombat() && PathFinding.isTileWalkable(npcs[x].getAnimablePosition()))
 	    		    			return npcs[x];
 	    				}
@@ -3795,7 +4507,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 	    			else if (currTask.equals("dogs")){
 	    				if(inArea(dogArea1[0], dogArea1[1], npcs[x].getPosition()) || inArea(dogArea2[0], 
 	    						dogArea2[1], npcs[x].getPosition())){
-	    					println("dog is in area");
+	    					
 	    					if(!npcs[x].isInCombat() && PathFinding.isTileWalkable(npcs[x].getAnimablePosition()))
 	    		    			return npcs[x];
 	    				}
@@ -3835,6 +4547,19 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 	    				if(!npcs[x].isInCombat() && PathFinding.isTileWalkable(npcs[x].getAnimablePosition()))
     		    			return npcs[x];
 	    				
+	    			}
+	    			else if (currTask.equals("cows")){
+	    				RSObject[] gDoor = Objects.getAt(cowGate);
+	    				if(gDoor.length > 0 && pos().distanceTo(gDoor[0].getPosition()) <=3){
+	    					if(gDoor[0].isOnScreen()){
+	    						if(pos().distanceTo(cowGate) <= 3){
+	    							clickRSObjectAt(cowGate, "Open");
+	    							sleep(1000,1200);
+	    						}
+	    					}
+	    				}
+	    				if(!npcs[x].isInCombat() && PathFinding.isTileWalkable(npcs[x].getAnimablePosition()))
+    		    			return npcs[x];
 	    			}
 	    			else if (currTask.equals("dwarves")){
 	    				if(!inArea(trickyDwarf[0], trickyDwarf[1], npcs[x].getPosition()) && inArea(dwarfAttackArea[0], 
@@ -3876,10 +4601,12 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 	    	RSNPC monster = getClosestInactiveNPC(id);
 	    	if(monster != null)	{
 	    		if (monster.isOnScreen()){
-	    			//DynamicClicking.clickRSModel(monster.getModel(), "Attack");
-	    			if(clickModel(monster.getModel(), "Attack", false)){
+	    			if(DynamicClicking.clickRSModel(monster.getModel(), "Attack")){
+	    			//if(clickModel(monster.getModel(), "Attack", false)){
 	    				waitIsMovin();
 	    				waitTillDead(monster);
+	    				LOOT();
+	    				sleep(100,120);
 	    			}
 	    		}
 	    		else if (monster.getPosition().distanceTo(Player.getPosition()) <= 4){
