@@ -51,7 +51,7 @@ import org.tribot.script.interfaces.MessageListening07;
 import org.tribot.script.interfaces.Painting;
 import org.tribot.script.interfaces.EventBlockingOverride;
 
-@ScriptManifest(authors = { "Yaw hide" }, version = 0.311, category = "Slayer", name = "Yaw hide's Easy Slayer")
+@ScriptManifest(authors = { "Yaw hide" }, version = 0.4, category = "Slayer", name = "Yaw hide's Easy Slayer")
 public class TuraelSlayer extends Script implements MessageListening07, Painting, EventBlockingOverride{
 
 	//food Ids
@@ -113,7 +113,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 	int SALT = 4161;
 	int SPINY = 4551;
 	int LAW = 563;
-	int EARTH = 556;
+	int EARTH = 557;
 	int AIR = 556;
 	int WATER = 555;
 	int FIRE = 554;
@@ -253,8 +253,25 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 	}
 
 	
+	public boolean waitGUI = true;
+	public boolean LootEverythingIncludingNonStacks = true;
+	public boolean LootOnlyStacksAndHighValueDrops = false;
+	public boolean LootOnlyHighValueDrops = false;
+	public boolean DoNotLoot = false;
+	public boolean UseRunesToTele = false;
+	public boolean PureMode = false;
 	
 	public void onStart(){
+		
+		EasySlayerGui g = new EasySlayerGui();
+		g.setVisible(true);
+		while(waitGUI){ 
+			sleep(500);
+		}
+		g.setVisible(false);
+		useTabs = !UseRunesToTele;
+		
+		
 		Mouse.setSpeed(General.random(150, 170));
 		sleep(200,300);
 		Walking.control_click = true;
@@ -262,7 +279,6 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 		putMap();
 		sleep(200, 250);
 		
-		useTabs = false;
 		
 		checkMagicLevel();
 		sleep(100, 150);
@@ -465,43 +481,39 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 	}
 	
 	public boolean haveRune(int option){ //Earth 0, Law 1, Air 2, Fire 3, Water 4, 
-		RSItem[] law = Inventory.find(LAW);
+		/*RSItem[] law = Inventory.find(LAW);
 		RSItem[] earth = Inventory.find(EARTH);
+		
 		RSItem[] air = Inventory.find(AIR);
 		RSItem[] water = Inventory.find(WATER);
-		RSItem[] fire = Inventory.find(FIRE);
+		RSItem[] fire = Inventory.find(FIRE);*/
+		int earth = Inventory.getCount(EARTH);
+		int law = Inventory.getCount(LAW);
+		int air = Inventory.getCount(AIR);
+		int fire = Inventory.getCount(FIRE);
+		int water = Inventory.getCount(WATER);
+		
 		switch(option){
 		case 0:
-			if(earth.length == 0)
+			if(earth == 0)
 				return false;
 			break;
 		case 1:
-			if(law.length == 0)
+			if(law < 2)
 				return false;
-			else{
-				if(law[0].getStack() < 2)
-					return false;
-			}
 			break;
 		case 2:
-			if(air.length == 0)
-				return false;
-			else{
-				if(air[0].getStack() < 5)
+			if(air < 5)
 					return false;
-			}
 			break;
 		case 3:
-			if(fire.length == 0)
+			if(fire == 0)
 				return false;
 			break;
 		case 4:
-			if(water.length == 0)
+			if(water < 2)
 				return false;
-			else{
-				if(water[0].getStack() < 2)
-					return false;
-			}
+			
 			break;
 		}
 		return true;
@@ -1293,12 +1305,13 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 		
 		Mouse.clickBox(471, 78, 478, 84, 1);
 		sleep(200,300);
-		
+		println("step 1");
 		if (games.length == 0){
 			withdraw(1, gamesNecklace);
 			sleep(200,300);
 		}
 		if (food.length < 10){
+			println("step 2");
 			withdraw(10, foodID);
 			sleep(200,300);
 		}
@@ -1308,18 +1321,19 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 			sleep(200,300);
 		}
 		
-		if(vtab.length == 0 || (vtab.length > 0 && vtab[0].getStack() < 10)){
+		if(useTabV && vtab.length == 0 || (vtab.length > 0 && vtab[0].getStack() < 10)){
 			withdrawTabOrRune(0);
 		}
 		
 		
 		if (currTask.equals("banshees")){
+			
 			if(ecto.length == 0){
 				
 				withdraw(1, ECTO);
 				sleep(200,300);
 			}
-			if(!checkForHelm(1) && earmuffs.length > 0){
+			if(!checkForHelm(1) && earmuffs.length == 0){
 				withdraw(1, EARMUFFS);
 				sleep(200,300);
 			}
@@ -1371,7 +1385,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 		else if (currTask.equals( "cave_slimes")){
 			if(tinder.length == 0 && lightsource.length == 0 && anti.length == 0 && spiny.length == 0){
 				
-				withdraw(1, lightsources[0]);
+				withdraw(1, lightsources);
 				sleep(200,300);
 				withdraw(1, antiPoison);
 				sleep(200,300);
@@ -1455,8 +1469,8 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 		}
 		else if (currTask.equals( "monkeys")){
 			
-				withdrawTabOrRune(1);
-				sleep(200,300);
+			withdrawTabOrRune(1);
+			sleep(200,300);
 			
 			if (coins.length > 0){
 				if(coins[0].getStack() < 10000){
@@ -1599,9 +1613,11 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 				}
 				
 			}
-			println("step 1");
+			
 			if (currTask.equals("banshees")) {
+				
 				if (ecto.length > 0 && (checkForHelm(1) || earmuffs.length > 0)){
+					
 					println("we got our stuff");
 					return true;
 				}
@@ -1631,7 +1647,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 						return true;
 				}
 				else{
-					println("step 4");
+					
 					if (!haveRune(1) || !haveRune(4)){
 						
 						return false;
@@ -4685,7 +4701,8 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 	    public boolean checkForHelm(int option){
 			RSItem[] helm = Interfaces.get(387, 28).getItems();
 			int helmID = 0;
-			if(option == 0) // spiny
+			if(PureMode && option == 0) return true;
+			else if(option == 0) // spiny
 				helmID = SPINY;
 			else if (option == 1) //earmuffs
 				helmID = EARMUFFS;
@@ -4702,8 +4719,8 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 	    	
 	    	RSItem[] helm0 = Inventory.find(SPINY);
 	    	RSItem[] helm1 = Inventory.find(EARMUFFS);
-			
-			if(option == 0){ // spiny
+			if(PureMode && option == 0) return true;
+	    	else if(option == 0){ // spiny
 				if(helm0.length > 0)
 					if(helm0[0].click("Wear"))
 						return true;
@@ -4884,6 +4901,341 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 			sleep(600,700);
 		}
 		
+	}
+	
+	/*
+	 * *
+	 * * *
+	 * * * * GUI STUFF * * * * * *
+	 * * * 
+	 * *
+	 * 
+	 */
+	
+	
+	class EasySlayerGui extends javax.swing.JFrame {
+
+	    /**
+	     * Creates new form EasySlayerGui
+	     */
+	    public EasySlayerGui() {
+	        initComponents();
+	        lootEverythingIncludingNonStacks.setSelected(true);
+	    }
+
+	    /**
+	     * This method is called from within the constructor to initialize the form.
+	     * WARNING: Do NOT modify this code. The content of this method is always
+	     * regenerated by the Form Editor.
+	     */
+	    @SuppressWarnings("unchecked")
+	    // <editor-fold defaultstate="collapsed" desc="Generated Code">                          
+	    private void initComponents() {
+
+	        jPanel1 = new javax.swing.JPanel();
+	        buttonGroup1 = new javax.swing.ButtonGroup();
+	        jLabel1 = new javax.swing.JLabel();
+	        jTabbedPane1 = new javax.swing.JTabbedPane();
+	        jPanel2 = new javax.swing.JPanel();
+	        lootEverythingIncludingNonStacks = new javax.swing.JRadioButton();
+	        lootOnlyStacksAndHighValueDrops = new javax.swing.JRadioButton();
+	        lootOnlyHighValueDrops = new javax.swing.JRadioButton();
+	        doNotLoot = new javax.swing.JRadioButton();
+	        jLabel2 = new javax.swing.JLabel();
+	        jPanel3 = new javax.swing.JPanel();
+	        useRunesToTele = new javax.swing.JRadioButton();
+	        jLabel3 = new javax.swing.JLabel();
+	        jLabel4 = new javax.swing.JLabel();
+	        pureMode = new javax.swing.JRadioButton();
+	        jLabel5 = new javax.swing.JLabel();
+	        startTheMagic = new javax.swing.JButton();
+
+	        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+	        jPanel1.setLayout(jPanel1Layout);
+	        jPanel1Layout.setHorizontalGroup(
+	            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+	            .addGap(0, 100, Short.MAX_VALUE)
+	        );
+	        jPanel1Layout.setVerticalGroup(
+	            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+	            .addGap(0, 100, Short.MAX_VALUE)
+	        );
+
+	        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+
+	        jLabel1.setFont(new java.awt.Font("Times New Roman", 3, 24)); // NOI18N
+	        jLabel1.setText("Yaw hide's Easy Slayer");
+
+	        jTabbedPane1.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+
+	        buttonGroup1.add(lootEverythingIncludingNonStacks);
+	        lootEverythingIncludingNonStacks.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
+	        lootEverythingIncludingNonStacks.setText("Loot Everything Including Non-Stackables");
+	        lootEverythingIncludingNonStacks.addActionListener(new java.awt.event.ActionListener() {
+	            public void actionPerformed(java.awt.event.ActionEvent evt) {
+	                lootEverythingIncludingNonStacksActionPerformed(evt);
+	            }
+	        });
+
+	        buttonGroup1.add(lootOnlyStacksAndHighValueDrops);
+	        lootOnlyStacksAndHighValueDrops.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
+	        lootOnlyStacksAndHighValueDrops.setText("Loot Only Stackables and High Value Drops");
+	        lootOnlyStacksAndHighValueDrops.addActionListener(new java.awt.event.ActionListener() {
+	            public void actionPerformed(java.awt.event.ActionEvent evt) {
+	                lootOnlyStacksAndHighValueDropsActionPerformed(evt);
+	            }
+	        });
+
+	        buttonGroup1.add(lootOnlyHighValueDrops);
+	        lootOnlyHighValueDrops.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
+	        lootOnlyHighValueDrops.setText("Loot Only High Value Drops");
+	        lootOnlyHighValueDrops.addActionListener(new java.awt.event.ActionListener() {
+	            public void actionPerformed(java.awt.event.ActionEvent evt) {
+	                lootOnlyHighValueDropsActionPerformed(evt);
+	            }
+	        });
+
+	        buttonGroup1.add(doNotLoot);
+	        doNotLoot.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
+	        doNotLoot.setText("Do Not Loot");
+	        doNotLoot.addActionListener(new java.awt.event.ActionListener() {
+	            public void actionPerformed(java.awt.event.ActionEvent evt) {
+	                doNotLootActionPerformed(evt);
+	            }
+	        });
+
+	        jLabel2.setFont(new java.awt.Font("Tahoma", 2, 12)); // NOI18N
+	        jLabel2.setText("Only rune items, dragon items, special drops, etc");
+
+	        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+	        jPanel2.setLayout(jPanel2Layout);
+	        jPanel2Layout.setHorizontalGroup(
+	            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+	            .addGroup(jPanel2Layout.createSequentialGroup()
+	                .addContainerGap()
+	                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+	                    .addComponent(lootEverythingIncludingNonStacks)
+	                    .addComponent(doNotLoot)
+	                    .addComponent(lootOnlyStacksAndHighValueDrops)
+	                    .addGroup(jPanel2Layout.createSequentialGroup()
+	                        .addComponent(lootOnlyHighValueDrops)
+	                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+	                        .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 275, javax.swing.GroupLayout.PREFERRED_SIZE)))
+	                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+	        );
+	        jPanel2Layout.setVerticalGroup(
+	            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+	            .addGroup(jPanel2Layout.createSequentialGroup()
+	                .addGap(23, 23, 23)
+	                .addComponent(lootEverythingIncludingNonStacks)
+	                .addGap(18, 18, 18)
+	                .addComponent(lootOnlyStacksAndHighValueDrops)
+	                .addGap(12, 12, 12)
+	                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+	                    .addComponent(lootOnlyHighValueDrops)
+	                    .addComponent(jLabel2))
+	                .addGap(18, 18, 18)
+	                .addComponent(doNotLoot)
+	                .addContainerGap(80, Short.MAX_VALUE))
+	        );
+
+	        jTabbedPane1.addTab("Looting", jPanel2);
+
+	        useRunesToTele.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
+	        useRunesToTele.setText("Use Runes to Teleport");
+	        useRunesToTele.addActionListener(new java.awt.event.ActionListener() {
+	            public void actionPerformed(java.awt.event.ActionEvent evt) {
+	                useRunesToTeleActionPerformed(evt);
+	            }
+	        });
+
+	        jLabel3.setFont(new java.awt.Font("Tahoma", 2, 12)); // NOI18N
+	        jLabel3.setText("If you don't have the required magic level to use runes,");
+
+	        jLabel4.setFont(new java.awt.Font("Tahoma", 2, 12)); // NOI18N
+	        jLabel4.setText("it will use Tabs instead. Default is to use tabs");
+
+	        pureMode.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
+	        pureMode.setText("Pure Mode");
+	        pureMode.addActionListener(new java.awt.event.ActionListener() {
+	            public void actionPerformed(java.awt.event.ActionEvent evt) {
+	                pureModeActionPerformed(evt);
+	            }
+	        });
+
+	        jLabel5.setFont(new java.awt.Font("Tahoma", 2, 12)); // NOI18N
+	        jLabel5.setText("If you are below 5 defense, you MUST use this option ");
+
+	        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
+	        jPanel3.setLayout(jPanel3Layout);
+	        jPanel3Layout.setHorizontalGroup(
+	            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+	            .addGroup(jPanel3Layout.createSequentialGroup()
+	                .addContainerGap()
+	                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+	                    .addGroup(jPanel3Layout.createSequentialGroup()
+	                        .addComponent(useRunesToTele)
+	                        .addGap(18, 18, 18)
+	                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+	                            .addComponent(jLabel3)
+	                            .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 261, javax.swing.GroupLayout.PREFERRED_SIZE)))
+	                    .addGroup(jPanel3Layout.createSequentialGroup()
+	                        .addComponent(pureMode)
+	                        .addGap(18, 18, 18)
+	                        .addComponent(jLabel5)))
+	                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+	        );
+	        jPanel3Layout.setVerticalGroup(
+	            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+	            .addGroup(jPanel3Layout.createSequentialGroup()
+	                .addGap(20, 20, 20)
+	                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+	                    .addComponent(useRunesToTele)
+	                    .addComponent(jLabel3))
+	                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+	                .addComponent(jLabel4)
+	                .addGap(18, 18, 18)
+	                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+	                    .addComponent(pureMode)
+	                    .addComponent(jLabel5))
+	                .addContainerGap(158, Short.MAX_VALUE))
+	        );
+
+	        jTabbedPane1.addTab("Misc", jPanel3);
+
+	        startTheMagic.setFont(new java.awt.Font("Tahoma", 2, 18)); // NOI18N
+	        startTheMagic.setText("Start the magic ");
+	        startTheMagic.addActionListener(new java.awt.event.ActionListener() {
+	            public void actionPerformed(java.awt.event.ActionEvent evt) {
+	                startTheMagicActionPerformed(evt);
+	            }
+	        });
+
+	        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+	        getContentPane().setLayout(layout);
+	        layout.setHorizontalGroup(
+	            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+	            .addGroup(layout.createSequentialGroup()
+	                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+	                    .addGroup(layout.createSequentialGroup()
+	                        .addGap(161, 161, 161)
+	                        .addComponent(jLabel1))
+	                    .addGroup(layout.createSequentialGroup()
+	                        .addGap(189, 189, 189)
+	                        .addComponent(startTheMagic))
+	                    .addGroup(layout.createSequentialGroup()
+	                        .addContainerGap()
+	                        .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 544, javax.swing.GroupLayout.PREFERRED_SIZE)))
+	                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+	        );
+	        layout.setVerticalGroup(
+	            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+	            .addGroup(layout.createSequentialGroup()
+	                .addContainerGap()
+	                .addComponent(jLabel1)
+	                .addGap(18, 18, 18)
+	                .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 304, javax.swing.GroupLayout.PREFERRED_SIZE)
+	                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+	                .addComponent(startTheMagic, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+	                .addContainerGap())
+	        );
+
+	        pack();
+	    }// </editor-fold>                        
+
+	    private void lootEverythingIncludingNonStacksActionPerformed(java.awt.event.ActionEvent evt) {                                                                 
+	        // TODO add your handling code here:
+	    }                                                                
+
+	    private void lootOnlyStacksAndHighValueDropsActionPerformed(java.awt.event.ActionEvent evt) {                                                                
+	        // TODO add your handling code here:
+	    }                                                               
+
+	    private void lootOnlyHighValueDropsActionPerformed(java.awt.event.ActionEvent evt) {                                                       
+	        // TODO add your handling code here:
+	    }                                                      
+
+	    private void doNotLootActionPerformed(java.awt.event.ActionEvent evt) {                                          
+	        // TODO add your handling code here:
+	    }                                         
+
+	    private void useRunesToTeleActionPerformed(java.awt.event.ActionEvent evt) {                                               
+	        // TODO add your handling code here:
+	    }                                              
+
+	    private void pureModeActionPerformed(java.awt.event.ActionEvent evt) {                                         
+	        // TODO add your handling code here:
+	    }                                        
+
+	    private void startTheMagicActionPerformed(java.awt.event.ActionEvent evt) {                                               
+	        // TODO add your handling code here:
+	    	
+	    	LootEverythingIncludingNonStacks = lootEverythingIncludingNonStacks.isSelected();
+	    	LootOnlyStacksAndHighValueDrops = lootOnlyStacksAndHighValueDrops.isSelected();
+	    	LootOnlyHighValueDrops = lootOnlyHighValueDrops.isSelected();
+	    	DoNotLoot = doNotLoot.isSelected();
+	    	UseRunesToTele = useRunesToTele.isSelected();
+	    	PureMode = pureMode.isSelected();
+	    	 
+	    	
+	    	waitGUI = false;
+	    	sleep(200,300);
+	    }                                             
+
+	    /**
+	     * @param args the command line arguments
+	     */
+	    /*
+	    public static void main(String args[]) {
+	        /* Set the Nimbus look and feel */
+	        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+	        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+	         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+	         
+	        try {
+	            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+	                if ("Nimbus".equals(info.getName())) {
+	                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+	                    break;
+	                }
+	            }
+	        } catch (ClassNotFoundException ex) {
+	            java.util.logging.Logger.getLogger(EasySlayerGui.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+	        } catch (InstantiationException ex) {
+	            java.util.logging.Logger.getLogger(EasySlayerGui.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+	        } catch (IllegalAccessException ex) {
+	            java.util.logging.Logger.getLogger(EasySlayerGui.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+	        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+	            java.util.logging.Logger.getLogger(EasySlayerGui.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+	        }
+	        //</editor-fold>
+
+	        /* Create and display the form 
+	        java.awt.EventQueue.invokeLater(new Runnable() {
+	            public void run() {
+	                new EasySlayerGui().setVisible(true);
+	            }
+	        });
+	    }*/
+	    // Variables declaration - do not modify     
+	    private javax.swing.ButtonGroup buttonGroup1;
+	    private javax.swing.JRadioButton doNotLoot;
+	    private javax.swing.JLabel jLabel1;
+	    private javax.swing.JLabel jLabel2;
+	    private javax.swing.JLabel jLabel3;
+	    private javax.swing.JLabel jLabel4;
+	    private javax.swing.JLabel jLabel5;
+	    private javax.swing.JPanel jPanel1;
+	    private javax.swing.JPanel jPanel2;
+	    private javax.swing.JPanel jPanel3;
+	    private javax.swing.JTabbedPane jTabbedPane1;
+	    private javax.swing.JRadioButton lootEverythingIncludingNonStacks;
+	    private javax.swing.JRadioButton lootOnlyHighValueDrops;
+	    private javax.swing.JRadioButton lootOnlyStacksAndHighValueDrops;
+	    private javax.swing.JRadioButton pureMode;
+	    private javax.swing.JButton startTheMagic;
+	    private javax.swing.JRadioButton useRunesToTele;
+	    // End of variables declaration                   
 	}
 		
 }
