@@ -237,7 +237,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 					FIGHT();
 			}
 			else{
-				println("i am not at my task pre 2");
+				
 				if (!haveReqEquip(0) || Inventory.find(loot).length > 0){
 					if(pos().distanceTo(varrockBankT) <= 8)
 						BANKING();
@@ -1317,9 +1317,12 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 		
 		
 		if (currTask.equals("banshees")){
-			if(ecto.length == 0 && earmuffs.length == 0){
+			if(ecto.length == 0){
+				
 				withdraw(1, ECTO);
 				sleep(200,300);
+			}
+			if(!checkForHelm(1) && earmuffs.length > 0){
 				withdraw(1, EARMUFFS);
 				sleep(200,300);
 			}
