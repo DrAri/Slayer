@@ -12,7 +12,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
-
+import org.tribot.api.interfaces.Positionable;
 import org.tribot.api.DynamicClicking;
 import org.tribot.api.General;
 import org.tribot.api.Timing;
@@ -53,17 +53,19 @@ import org.tribot.script.interfaces.EventBlockingOverride;
 
 @ScriptManifest(authors = { "Yaw hide" }, version = 0.41, category = "Slayer", name = "Yaw hide's Easy Slayer")
 public class TuraelSlayer extends Script implements MessageListening07, Painting, EventBlockingOverride{
-
+	
 	//food Ids
 	//int[] foodID = {333, 379};
 	int[] foodID = { 333, 329, 379, 361, 7946, 1897 };
 	int[] junk = { 886, 1539, 9003, 229, 1623, 1355, 440, 7767, 117,
 			6963, 554, 556, 829, 1971, 687, 464, 1973, 1917, 808, 1454, 6180,
 			6965, 1969, 6183, 6181 };
+	
 	int[] loot = {563, 560, 561, 562, 564, 565, 566, 7937, 816, 1747, 536, 9142, 868, 563,
 			1615, 1319, 1373, 1247, 1303, 1249, 1123, 1149, 1201,
 			1186, 1113, 1079, 892, 565, 560, 561, 563, 2361, 2366, 443, 
 			985, 987, 2363, 1617, 1619, 574};
+	
 	String[] names = {"Law rune", "Death rune", "Nature rune", "Chaos rune", "Cosmic rune", 
 			"Blood rune", "Soul rune", "Pure essence", "Adamant dart(p)",
 			"Black dragonhide", "Dragon bones", "Mithril bolts",
@@ -75,7 +77,8 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 			"Rune platelegs", "Rune arrow", "Blood rune", "Death rune",
 			"Nature rune", "Law rune", "Adamantite bar", "Shield left half",
 			"Silver ore", "Half of a key", "Half of a key",
-			"Runite bar", "Uncut diamond", "Uncut ruby", "Air orb",};
+			"Runite bar", "Uncut diamond", "Uncut ruby", "Air orb"};
+	
 	
 	//TODO LOOT()
 	public void LOOT(){
@@ -969,7 +972,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 				Mouse.setSpeed(General.random(150, 170));
 			} 
 			else {
-				Walking.walkPath(Walking.generateStraightPath(crawlingHandsT));
+				Walking.walkPath(toCrawlingHands);
 				waitIsMovin();
 			}
 				
@@ -1006,7 +1009,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 				Mouse.setSpeed(General.random(150, 170));
 			} 
 			else {
-				Walking.walkPath(toGhost);
+				Walking.walkPath(Walking.generateStraightPath(ghostMiddle));
 				waitIsMovin();
 			}
 				
@@ -2106,7 +2109,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 			new RSTile(3446, 3497, 0), new RSTile(3442, 3505, 0), new RSTile(3436, 3511, 0), 
 			new RSTile(3432, 3518, 0), new RSTile(3429, 3524, 0), new RSTile(3428, 3532, 0), 
 			new RSTile(3428, 3535, 0) };
-	RSTile[] toCrawlingHands = { new RSTile(3428, 3538, 0), new RSTile(3428, 3542, 0), 
+	RSTile[] toCrawlingHands = { new RSTile(3428, 3538, 0), new RSTile(3418, 3546, 0), new RSTile(3428, 3542, 0), 
 			new RSTile(3428, 3548, 0), new RSTile(3426, 3554, 0), new RSTile(3421, 3557, 0), 
 			new RSTile(3415, 3558, 0), new RSTile(3412, 3562, 0), new RSTile(3412, 3570, 0),
 			new RSTile(3418, 3570, 0) };
@@ -3107,7 +3110,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 				WebWalking.walkTo(nearedgeTrapdoorTile);
 				waitIsMovin();
 			}
-			if(pos().distanceTo(nearedgeTrapdoorTile) <=5){
+			if(pos().distanceTo(nearedgeTrapdoorTile) <=5 && pos().getY() >= nearedgeTrapdoorTile.getY()){
 				RSObject[] edgeTrapdoor = Objects.getAt(edgeTrapdoorTile);
 				Camera.setCameraRotation(General.random(192, 244));
 				if (edgeTrapdoor.length > 0) {
@@ -3303,7 +3306,7 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 				WebWalking.walkTo(nearedgeTrapdoorTile);
 				waitIsMovin();
 			}
-			if(pos().distanceTo(nearedgeTrapdoorTile) <=5){
+			if(pos().distanceTo(nearedgeTrapdoorTile) <=5 && pos().getY() >= nearedgeTrapdoorTile.getY()){
 				RSObject[] edgeTrapdoor = Objects.getAt(edgeTrapdoorTile);
 				Camera.setCameraRotation(General.random(192, 244));
 				
@@ -3394,12 +3397,14 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 			else if (inArea(varrockArea[0], varrockArea[1], pos())){
 				WebWalking.walkTo(nearedgeTrapdoorTile);
 				waitIsMovin();
-			}			
+			}
 			else if (inArea(zombieArea[0], zombieArea[1], pos()))
 				return true;
 			else
 				useTeleport(0);
 		}
+			
+			
 		
 		return false;
 	}
@@ -4639,7 +4644,8 @@ public class TuraelSlayer extends Script implements MessageListening07, Painting
 	    			sleep(2000,2500);
 	    		}
 	    		else{
-	    			Walking.walkTo(monster.getPosition());
+	    			
+	    			Walking.blindWalkTo(monster.getPosition());
 	    			sleep(2000,2500);
 	    		}
 	    	}

@@ -60,7 +60,7 @@ public class SlayerTask{
 
 	private static ArrayList<String> monsterStr = new ArrayList<String>();
 	private static String name = null;
-	private static String[] specialItems = null;
+	private static ArrayList<String> specialItems = new ArrayList<String>();
 	private static int leftToKill;
 	private static Positionable monsterMiddle;
 
@@ -84,7 +84,7 @@ public class SlayerTask{
 	}
 
 	public String[] getSpecialItems() {
-		return specialItems;
+		return specialItems.toArray(new String[specialItems.size()]);
 	}
 
 	public static int getAmountLeft() {
@@ -187,20 +187,40 @@ public class SlayerTask{
 			monsterStr.add("Spider");
 			monsterStr.add("Giant spider");
 			monsterStr.add("Crypt spider");
-			monsterStr.add("Spider");
-			monsterStr.add("Spider");
+			monsterStr.add("Deadly red spider");
+			monsterStr.add("Giant crypt spider");
+			monsterStr.add("Jungle spider");
 			break;
 		case "werewolves":
-			monsterStr.add("");
+			monsterStr.add("Yuri");
+			monsterStr.add("Zoja");
+			monsterStr.add("Lev");
+			monsterStr.add("Svetlana");
+			monsterStr.add("Boris");
+			monsterStr.add("Irina");
+			monsterStr.add("Sofiya");
+			monsterStr.add("Yadviga");
+			monsterStr.add("Nikita");
+			monsterStr.add("Fidelio");
+			monsterStr.add("Joseph");
+			monsterStr.add("Georgy");
 			break;
 		case "wolves":
-			monsterStr.add("");
+			monsterStr.add("Big wolf");
+			monsterStr.add("Desert wolf");
+			monsterStr.add("Dire wolf");
+			monsterStr.add("Ice wolf");
+			monsterStr.add("Jungle wolf");
+			monsterStr.add("White wolf");
+			monsterStr.add("Wolf");
 			break;
 		case "desert_lizards":
-			monsterStr.add("");
+			monsterStr.add("Desert lizard");
+			monsterStr.add("Lizard");
+			monsterStr.add("Small lizard");
 			break;
 		case "zombies":
-			monsterStr.add("");
+			monsterStr.add("Undead one");
 			break;
 		}
 		return;
@@ -210,25 +230,25 @@ public class SlayerTask{
 	public static void setSpecialItems(){
 		switch(name){
 		case "banshees":
-
+			specialItems.add("Earmuffs");
 			break;
 		case "bats":
 			
 			break;
 		case "bears":
-
+			
 			break;
 		case "birds":
-
+			
 			break;
 		case "cave_bugs":
-
+			specialItems.add("Spiny helmet");
 			break;
 		case "cave_crawlers":
 
 			break;
 		case "cave_slimes":
-
+			specialItems.add("Spiny helmet");
 			break;
 		case "cows":
 
@@ -279,7 +299,7 @@ public class SlayerTask{
 
 			break;
 		case "desert_lizards":
-
+			specialItems.add("Ice cooler");
 			break;
 		case "zombies":
 
