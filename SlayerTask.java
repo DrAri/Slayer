@@ -1,84 +1,291 @@
 package scripts;
 
+import java.util.ArrayList;
 import org.tribot.api2007.Interfaces;
 import org.tribot.api2007.types.RSInterface;
+import org.tribot.api.interfaces.Positionable;
+import org.tribot.script.Script;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Polygon;
+import java.awt.Rectangle;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
+import java.util.HashMap;
+import org.tribot.api.interfaces.Positionable;
+import org.tribot.api.DynamicClicking;
+import org.tribot.api.General;
+import org.tribot.api.Timing;
+import org.tribot.api.input.Keyboard;
+import org.tribot.api.input.Mouse;
+import org.tribot.api2007.Banking;
+import org.tribot.api2007.Camera;
+import org.tribot.api2007.ChooseOption;
+import org.tribot.api2007.Game;
+import org.tribot.api2007.GameTab;
+import org.tribot.api2007.GroundItems;
+import org.tribot.api2007.Interfaces;
+import org.tribot.api2007.Inventory;
+import org.tribot.api2007.NPCChat;
+import org.tribot.api2007.NPCs;
+import org.tribot.api2007.Objects;
+import org.tribot.api2007.PathFinding;
+import org.tribot.api2007.Player;
+import org.tribot.api2007.Players;
+import org.tribot.api2007.Projection;
+import org.tribot.api2007.Screen;
+import org.tribot.api2007.Skills;
+import org.tribot.api2007.Walking;
+import org.tribot.api2007.WebWalking;
+import org.tribot.api2007.types.RSGroundItem;
+import org.tribot.api2007.types.RSInterface;
+import org.tribot.api2007.types.RSItem;
+import org.tribot.api2007.types.RSModel;
+import org.tribot.api2007.types.RSNPC;
+import org.tribot.api2007.types.RSObject;
+import org.tribot.api2007.types.RSPlayer;
+import org.tribot.api2007.types.RSTile;
+import org.tribot.script.Script;
+import org.tribot.script.ScriptManifest;
+import org.tribot.script.interfaces.MessageListening07;
+import org.tribot.script.interfaces.Painting;
+import org.tribot.script.interfaces.EventBlockingOverride;
 
-public class SlayerTask {
+public class SlayerTask{
 
-	private static int[] IDs = null;
+	private static ArrayList<String> monsterStr = new ArrayList<String>();
 	private static String name = null;
-	private static boolean specialItems = false;
+	private static String[] specialItems = null;
+	private static int leftToKill;
+	private static Positionable monsterMiddle;
 
 	// classes (like hitpoints before)
 
-	public SlayerTask(int[] IDs, String name, boolean specialItems) {
-		this.IDs = IDs;
+	public SlayerTask(String name, int leftToKill) {
 		this.name = name;
-		this.specialItems = specialItems;
+		setMonsterString();
+		setSpecialItems();
+		this.leftToKill = leftToKill;
 	}
 
 	// now the getters and setters
 
-	public static int[] getMonsterID() {
-		return IDs;
+	public static RSNPC[] getMonsterStr() {
+		return NPCs.findNearest(monsterStr.toArray(new String[monsterStr.size()]));
 	}
 
 	public static String getMonsterName() {
 		return name;
 	}
 
-	public boolean needsSpecialItems() {
+	public String[] getSpecialItems() {
 		return specialItems;
 	}
 
 	public static int getAmountLeft() {
-		RSInterface textInterface = Interfaces.get(243, 2);
-		if (textInterface != null && textInterface.getText().length() > 0)
-			return filterNumbers(textInterface.getText());
-		return 0;
+		return leftToKill;
 	}
 
 	public static String getMonsterToKill() {
-		RSInterface textInterface = Interfaces.get(243, 2);
-		if (textInterface != null && textInterface.getText().length() > 0)
-			return filterWords(sliceText(textInterface.getText()));
-		return null;
+		return name;
 	}
 
-	public static String[] sliceText(String s) {
-		return s.split(" ");
-	}
-
-	public static int filterNumbers(String s) {
-		StringBuilder sb = new StringBuilder();
-		for (char c : s.toCharArray()) {
-			if (isNumber(c))
-				sb.append(c);
+	public static void setMonsterString(){
+		switch(name){
+		case "banshees":
+			monsterStr.add("Banshee");
+			break;
+		case "bats":
+			monsterStr.add("Giant bat");
+			break;
+		case "bears":
+			monsterStr.add("Grizzly bear");
+			monsterStr.add("Bear");
+			monsterStr.add("Bear cub");
+			monsterStr.add("Black bear");
+			monsterStr.add("Grizzly bear cub");
+			break;
+		case "birds":
+			monsterStr.add("Terrorbird");
+			break;
+		case "cave_bugs":
+			monsterStr.add("Cave bug");
+			break;
+		case "cave_crawlers":
+			monsterStr.add("Cave crawler");
+			break;
+		case "cave_slimes":
+			monsterStr.add("Cave slime");
+			break;
+		case "cows":
+			monsterStr.add("Cow");
+			monsterStr.add("Cow calf");
+			monsterStr.add("Unicow");
+			break;
+		case "crawling_hands":
+			monsterStr.add("Crawling Hand");
+			break;
+		case "dogs":
+			monsterStr.add("Guard dog");
+			monsterStr.add("Wild dog");
+			break;
+		case "dwarves":
+			monsterStr.add("Dwarf");
+			monsterStr.add("Black guard");
+			monsterStr.add("Chaos dwarf");
+			break;
+		case "ghosts":
+			monsterStr.add("Ghost");
+			monsterStr.add("Ghost");
+			break;
+		case "goblins":
+			monsterStr.add("Goblin");
+			monsterStr.add("Cave goblin guard");
+			monsterStr.add("Hobgoblin");
+			break;
+		case "icefiends":
+			monsterStr.add("Icefiends");
+			break;
+		case "kalphite":
+			monsterStr.add("Kalphite Worker");
+			monsterStr.add("Kalphite Guardian");
+			monsterStr.add("Kalphite Queen");
+			monsterStr.add("Kalphite Soldier");
+			break;
+		case "minotaurs":
+			monsterStr.add("Minotaur");
+			break;
+		case "monkeys":
+			monsterStr.add("Monkey");
+			monsterStr.add("Monkey archer");
+			monsterStr.add("Monkey guard");
+			monsterStr.add("Ninja monkey");
+			monsterStr.add("Zombie monkey");
+			break;
+		case "rats":
+			monsterStr.add("Giant rat");
+			monsterStr.add("Rat");
+			monsterStr.add("Brine rat");
+			monsterStr.add("Crypt rat");
+			monsterStr.add("Giant crypt rat");
+			break;
+		case "scorpions":
+			monsterStr.add("King scorpion");
+			monsterStr.add("Poison scorpion");
+			monsterStr.add("Scorpion");
+			break;
+		case "skeletons":
+			monsterStr.add("Giant skeleton");
+			monsterStr.add("Skeleton");
+			break;
+		case "spiders":
+			monsterStr.add("Spider");
+			monsterStr.add("Giant spider");
+			monsterStr.add("Crypt spider");
+			monsterStr.add("Spider");
+			monsterStr.add("Spider");
+			break;
+		case "werewolves":
+			monsterStr.add("");
+			break;
+		case "wolves":
+			monsterStr.add("");
+			break;
+		case "desert_lizards":
+			monsterStr.add("");
+			break;
+		case "zombies":
+			monsterStr.add("");
+			break;
 		}
-		String finalString = sb.toString();
-		if (finalString.length() > 0)
-			return Integer.parseInt(finalString);
-		return 0;
-
+		return;
+		
 	}
 
-	public static String filterWords(String[] string) {
-		for (String s : string) {
-			if (!isUselessWord(s)) {
-				return s.replace(";", "");
-			}
+	public static void setSpecialItems(){
+		switch(name){
+		case "banshees":
+
+			break;
+		case "bats":
+			
+			break;
+		case "bears":
+
+			break;
+		case "birds":
+
+			break;
+		case "cave_bugs":
+
+			break;
+		case "cave_crawlers":
+
+			break;
+		case "cave_slimes":
+
+			break;
+		case "cows":
+
+			break;
+		case "crawling_hands":
+
+			break;
+		case "dogs":
+
+			break;
+		case "dwarves":
+
+			break;
+		case "ghosts":
+
+			break;
+		case "goblins":
+
+			break;
+		case "icefiends":
+
+			break;
+		case "kalphite":
+
+			break;
+		case "minotaurs":
+
+			break;
+		case "monkeys":
+
+			break;
+		case "rats":
+
+			break;
+		case "scorpions":
+
+			break;
+		case "skeletons":
+
+			break;
+		case "spiders":
+
+			break;
+		case "werewolves":
+
+			break;
+		case "wolves":
+
+			break;
+		case "desert_lizards":
+
+			break;
+		case "zombies":
+
+			break;
 		}
-		return null;
+		return;
 	}
-
-	static boolean isUselessWord(String s) {
-		String useless = "You're currently assigned to kill only more";
-		return useless.contains(s);
-	}
-
-	static boolean isNumber(char c) {
-		String numString = "0123456789";
-		return numString.contains(c + "");
-	}
-
+	
 }
