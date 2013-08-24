@@ -9,21 +9,25 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-@ScriptManifest(authors={"Platinum Force Scripts"}, name="Yawhide Helper", category="Tools")
+@ScriptManifest(authors={"Platinum Force Scripts and Yaw hide"}, name="Has Tabs/Runes Helper", category="Tools")
 public class YawhideHelper extends Script {
 
 	public String Locations[] = { "Varrock", "Falador", "Camelot", "Ardougne", "Lumbridge" };
 	public Map<String, String[]> TASK = new LinkedHashMap<String, String[]>();
 	public Map<String, Integer> TABS = new LinkedHashMap<String, Integer>();
-	
-	//TODO Change task to any task named below
-	public String currTask = "dogs";
+	public Map<String, Integer[]> RUNES = new LinkedHashMap<String, Integer[]>();
 	
 	int VTAB = 8007;
 	int FTAB = 8009;
 	int CTAB = 8010;
 	int LTAB = 8008;
 	int ATAB = 8011;
+	
+	int LAW = 563;
+	int EARTH = 557;
+	int AIR = 556;
+	int WATER = 555;
+	int FIRE = 554;
 	
 	@Override
 	public void run(){
@@ -34,6 +38,7 @@ public class YawhideHelper extends Script {
 		TASK.put("Ardougne", new String[] { "bears", "birds", "dogs" });
 		TASK.put("Lumbridge", new String[] { "cave_slimes", "cave_bugs", "goblins", "spiders" });
 
+		
 		//Add tabs by location
 		TABS.put("Varrock", VTAB);
 		TABS.put("Falador", FTAB);
@@ -41,21 +46,37 @@ public class YawhideHelper extends Script {
 		TABS.put("Lumbridge", LTAB);
 		TABS.put("Ardougne", ATAB);
 		
-		println(hasReqTab());
+		//Add runes by location
+		RUNES.put("Varrock", new Integer[] { LAW, AIR, FIRE });
+		RUNES.put("Falador", new Integer[] { WATER, LAW, AIR });
+		RUNES.put("Camelot", new Integer[] { AIR, LAW });
+		RUNES.put("Lumbridge", new Integer[] { EARTH, LAW, AIR });
+		RUNES.put("Ardougne", new Integer[] { WATER, LAW });
+		
+		//println(hasReqTab());
 	}
 
 	/* Checks if the player has the required tab for a specific task */
 	
-	public boolean hasReqTab(){
+	public boolean hasReqTab(boolean usingTabs, String currTask){
 		for(String loc : Locations){
 			if(Arrays.asList(TASK.get(loc)).contains(currTask)){
-				RSItem[] tabs = Inventory.find(TABS.get(loc));
-				if(tabs.length > 0)
+				if (usingTabs){
+					RSItem[] tabs = Inventory.find(TABS.get(loc));
+					if(tabs.length > 0)
+						return true;
+				}
+				else{
+					for(Integer i : RUNES.get(loc)){
+						int count = Inventory.getCount(i);
+						if(count == 0)
+							return false;
+					}
 					return true;
+				}
 				break;
 			}
 		}
 		return false;
 	}
-	
 }

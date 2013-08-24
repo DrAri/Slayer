@@ -141,7 +141,6 @@ public class SlayerTask{
 			break;
 		case "ghosts":
 			monsterStr.add("Ghost");
-			monsterStr.add("Ghost");
 			break;
 		case "goblins":
 			monsterStr.add("Goblin");
